@@ -5,6 +5,8 @@ void Settings::begin() {
   _prefs.begin("profile", false);
   _height = _prefs.getInt("height", static_cast<int>(cfg::USER_HEIGHT_CM));
   _weight = _prefs.getInt("weight", static_cast<int>(cfg::USER_WEIGHT_KG));
+  _sex    = _prefs.getInt("sex", MALE);
+  _age    = _prefs.getInt("age", 48);
   _goal   = _prefs.getUInt("goal", cfg::STEP_GOAL_DEFAULT);
   _flip = _prefs.getBool("flip", false);
   _screenSecs = _prefs.getInt("scrsec", cfg::INACTIVITY_MS / 1000);
@@ -53,6 +55,16 @@ void Settings::setWeight(int kg) {
   if (kg > WEIGHT_MAX) kg = WEIGHT_MAX;
   _weight = kg;
   _prefs.putInt("weight", _weight);
+}
+
+void Settings::toggleSex() {
+  _sex = (_sex == MALE) ? FEMALE : MALE;
+  _prefs.putInt("sex", _sex);
+}
+
+void Settings::cycleAge() {
+  _age = (_age >= AGE_MAX) ? AGE_MIN : _age + 1;
+  _prefs.putInt("age", _age);
 }
 
 void Settings::setStepGoal(uint32_t goal) {

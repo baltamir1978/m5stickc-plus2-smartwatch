@@ -25,6 +25,8 @@ void SettingsScreen::onButtonB() {
       s->setWeight(w);
       break;
     }
+    case SEX:     s->toggleSex();          break;
+    case AGE:     s->cycleAge();           break;
     case TIMEOUT: s->cycleScreenTimeout(); break;
     case FLIP:
       s->toggleFlip();
@@ -57,6 +59,9 @@ void SettingsScreen::draw(M5Canvas& c) {
            static_cast<unsigned long>(s ? s->stepGoal() : 0));
   snprintf(rows[HEIGHT],  sizeof(rows[0]), "Altura   %d cm", s ? s->height() : 0);
   snprintf(rows[WEIGHT],  sizeof(rows[0]), "Peso     %d kg", s ? s->weight() : 0);
+  snprintf(rows[SEX],     sizeof(rows[0]), "Sexo     %s",
+           (s && s->sex() == Settings::FEMALE) ? "mujer" : "hombre");
+  snprintf(rows[AGE],     sizeof(rows[0]), "Edad     %d", s ? s->age() : 0);
   snprintf(rows[TIMEOUT], sizeof(rows[0]), "Apagar   %d s", s ? s->screenSecs() : 0);
   snprintf(rows[FLIP],    sizeof(rows[0]), "Pantalla %s",
            (s && s->flipped()) ? "volteada" : "normal");

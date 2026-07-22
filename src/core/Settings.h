@@ -8,8 +8,12 @@ class Settings {
 public:
   void begin();
 
+  enum Sex { MALE = 0, FEMALE = 1 };
+
   int      height()   const { return _height; }    // cm
   int      weight()   const { return _weight; }    // kg
+  int      sex()      const { return _sex; }       // MALE / FEMALE
+  int      age()      const { return _age; }        // años
   uint32_t stepGoal() const { return _goal; }
   bool     flipped()  const { return _flip; }
   uint8_t  rotation() const { return _flip ? 1 : 3; }      // 3 = normal, 1 = volteada
@@ -22,6 +26,8 @@ public:
   void setHeight(int cm);
   void setWeight(int kg);
   void setStepGoal(uint32_t goal);
+  void toggleSex();             // hombre <-> mujer y persiste
+  void cycleAge();              // +1 año (AGE_MIN..AGE_MAX) y persiste
   void toggleFlip();            // gira la pantalla 180° y persiste
   void cycleScreenTimeout();    // 5 -> 10 -> 15 -> 30 -> 60 -> 5 s y persiste
   void cycleDayHour();          // +1 h (0..23) y persiste
@@ -31,12 +37,15 @@ public:
   // Rangos y pasos de edición.
   static constexpr int      HEIGHT_MIN = 120, HEIGHT_MAX = 220;
   static constexpr int      WEIGHT_MIN = 30,  WEIGHT_MAX = 200;
+  static constexpr int      AGE_MIN = 5, AGE_MAX = 99;
   static constexpr uint32_t GOAL_MIN = 1000, GOAL_MAX = 30000, GOAL_STEP = 500;
 
 private:
   Preferences _prefs;
   int      _height     = 181;
   int      _weight     = 100;
+  int      _sex        = MALE;
+  int      _age        = 48;
   uint32_t _goal       = 10000;
   bool     _flip       = false;
   int      _screenSecs = 5;

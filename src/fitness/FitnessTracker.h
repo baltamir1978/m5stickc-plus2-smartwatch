@@ -23,7 +23,8 @@ public:
 
   uint32_t steps() const          { return _steps; }
   float    distanceMeters() const;
-  int      calories() const;
+  int      activeCalories() const;   // solo calorías por actividad (anillo Move)
+  int      calories() const;         // total del día = basal (BMR prorrateado) + activas
   uint32_t activeMinutes() const  { return _activeMinutes; }
   int      standHours() const     { return __builtin_popcount(_stoodMask); }  // horas del día con actividad
 
@@ -41,6 +42,7 @@ private:
   int      _dayKey         = -1;   // aaaammdd del día en curso
   int      _lastMinOfDay   = -1;
   uint32_t _stepsThisMinute = 0;
+  uint32_t _secondsToday   = 0;   // segundos transcurridos del día (para BMR prorrateado)
   int      _curHour        = -1;   // hora en curso (para horas de pie)
   uint32_t _hourSteps      = 0;    // pasos en la hora en curso
   uint32_t _stoodMask      = 0;    // bitmask de horas del día "de pie"

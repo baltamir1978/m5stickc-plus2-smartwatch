@@ -113,7 +113,7 @@ void WatchfaceScreen::drawClean(M5Canvas& c) {
 
   // --- 3 anillos de actividad (derecha) ---
   uint32_t steps = _ctx->fitness ? _ctx->fitness->steps() : 0;
-  int      kcal  = _ctx->fitness ? _ctx->fitness->calories() : 0;
+  int      kcal  = _ctx->fitness ? _ctx->fitness->activeCalories() : 0;  // anillo Move = activas
   int      stand = _ctx->fitness ? _ctx->fitness->standHours() : 0;
   float calF   = (cfg::CALORIE_GOAL > 0) ? static_cast<float>(kcal) / cfg::CALORIE_GOAL : 0;
   float stepF  = (_ctx->stepGoal > 0)    ? static_cast<float>(steps) / _ctx->stepGoal : 0;

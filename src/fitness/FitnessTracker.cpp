@@ -46,6 +46,8 @@ void FitnessTracker::update(const LocalTime& t) {
     save(true);
   }
 
+  _secondsToday = t.hour * 3600u + t.minute * 60u + t.second;
+
   // Cambio de hora: reiniciar el contador de pasos de la hora (para horas de pie).
   if (_curHour < 0) {
     _curHour = t.hour;
@@ -80,10 +82,23 @@ float FitnessTracker::distanceMeters() const {
   return _steps * stride_m;
 }
 
-int FitnessTracker::calories() const {
+int FitnessTracker::activeCalories() const {
   const float weight_kg = _settings ? _settings->weight() : cfg::USER_WEIGHT_KG;
   const float km = distanceMeters() / 1000.0f;
   return static_cast<int>(weight_kg * km * 0.9f + 0.5f);
+}
+
+int FitnessTracker::calories() const {
+  // Metabolismo basal (Mifflin-St Jeor) prorrateado al tiempo transcurrido del día
+  // + calorías por actividad.
+  const float w = _settings ? _settings->weight() : cfg::USER_WEIGHT_KG;
+  const float h = _settings ? _settings->height() : cfg::USER_HEIGHT_CM;
+  const int   age  = _settings ? _settings->age() : 48;
+  const bool  male = _settings ? (_settings->sex() == Settings::MALE) : true;
+
+  const float bmr = 10.0f * w + 6.25f * h - 5.0f * age + (male ? 5.0f : -161.0f);
+  const float basal = bmr * (_secondsToday / 86400.0f);
+  return static_cast<int>(basal + activeCalories() + 0.5f);
 }
 
 bool FitnessTracker::consumeInactivityAlert() {

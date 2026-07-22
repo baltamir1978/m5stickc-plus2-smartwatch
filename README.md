@@ -19,8 +19,9 @@ esferas, contapasos y métricas de actividad, gesto de levantar la muñeca, avis
   - **MINIMAL** — solo la hora, enorme.
   - **DASHBOARD** — hora + rejilla de pasos, distancia y calorías.
 - **Fitness** — contapasos (acelerómetro MPU6886) con filtro de cadencia, distancia,
-  calorías, minutos activos, **horas de pie** y aviso de inactividad. Reinicio diario a
-  medianoche; los datos del día sobreviven a reinicios.
+  **calorías** (metabolismo basal Mifflin-St Jeor según sexo/edad/peso/altura + activas),
+  minutos activos, **horas de pie** y aviso de inactividad. Reinicio diario a medianoche;
+  los datos del día sobreviven a reinicios.
 - **Wrist-raise** — girar la muñeca (giroscopio) enciende la pantalla; respeta el volteo.
 - **Llamadas entrantes (iPhone / ANCS)** — overlay a pantalla completa con icono de
   teléfono, nombre grande de quien llama, pitido y opción de **colgar** desde el reloj.
@@ -29,7 +30,7 @@ esferas, contapasos y métricas de actividad, gesto de levantar la muñeca, avis
   original) por el emisor IR para apagar casi cualquier televisor.
 - **Brillo automático día/noche** con horas configurables.
 - **Ajustes** editables desde el reloj (con scroll): objetivo de pasos, altura, peso,
-  tiempo de pantalla, volteo, horas día/noche y **modo BLE ahorro**.
+  **sexo**, **edad**, tiempo de pantalla, volteo, horas día/noche y **modo BLE ahorro**.
 - **Modo BLE ahorro** — apaga el BLE casi todo el tiempo (sin llamadas) y solo lo
   enciende una vez al día para sincronizar la hora.
 - **Sensor ambiental ENV III** (opcional) — si se detecta al arrancar (Hat G0/G26 o
