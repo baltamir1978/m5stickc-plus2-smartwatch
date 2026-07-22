@@ -168,10 +168,9 @@ void loop() {
   if (ctx.tvbgoneRequested) {
     ctx.tvbgoneRequested = false;
     power.notifyActivity();
-    ir.powerOffAll([](int total, int idx, const char* brand) {
-      ui.drawIrProgress(brand, idx, total);
-    });
-    delay(400);
+    ir.powerOffAll(
+      [](int total, int idx, const char* brand) { ui.drawIrProgress(brand, idx, total); },
+      []() { M5.update(); return static_cast<bool>(M5.BtnB.wasPressed()); });  // BtnB otra vez = parar
     ui.forceRedraw();
   }
 

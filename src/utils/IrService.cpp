@@ -13,7 +13,8 @@ int IrService::codeCount() const {
   return tvbgone_eu::EU_CODE_COUNT;
 }
 
-void IrService::powerOffAll(std::function<void(int, int, const char*)> onStep) {
+void IrService::powerOffAll(std::function<void(int, int, const char*)> onStep,
+                            std::function<bool()> shouldAbort) {
   if (_tx == nullptr) return;
 
   const int total = tvbgone_eu::EU_CODE_COUNT;
@@ -38,6 +39,13 @@ void IrService::powerOffAll(std::function<void(int, int, const char*)> onStep) {
       snprintf(label, sizeof(label), "EU %d/%d", i + 1, total);
       onStep(total, i + 1, label);
     }
-    delay(60);  // pequeña pausa entre códigos
+
+    // Pausa interrumpible: si se vuelve a pulsar BtnB, parar de emitir.
+    bool stop = false;
+    for (int t = 0; t < 6 && !stop; ++t) {
+      if (shouldAbort && shouldAbort()) stop = true;
+      else delay(10);
+    }
+    if (stop) break;
   }
 }

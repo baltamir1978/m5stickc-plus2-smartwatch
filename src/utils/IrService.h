@@ -16,8 +16,10 @@ public:
   int  codeCount() const;
 
   // Emite todos los códigos en secuencia. onStep(total, idx, marca) se invoca
-  // tras cada envío para que la UI muestre el progreso.
-  void powerOffAll(std::function<void(int total, int idx, const char* brand)> onStep = nullptr);
+  // tras cada envío para que la UI muestre el progreso. shouldAbort() se consulta
+  // entre códigos: si devuelve true, se detiene el envío (p.ej. al pulsar BtnB).
+  void powerOffAll(std::function<void(int total, int idx, const char* brand)> onStep = nullptr,
+                   std::function<bool()> shouldAbort = nullptr);
 
 private:
   IRsend* _tx = nullptr;

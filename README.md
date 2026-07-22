@@ -16,8 +16,9 @@ esferas, contapasos y métricas de actividad, gesto de levantar la muñeca, avis
 - **Reloj** con 3 esferas digitales conmutables (persisten en memoria):
   - **CLEAN** — hora grande en color, fecha, iconos de estado y **3 anillos de
     actividad estilo Apple** (calorías / pasos / horas de pie) + distancia.
-  - **MINIMAL** — solo la hora, enorme.
-  - **DASHBOARD** — hora + rejilla de pasos, distancia y calorías.
+  - **MINIMAL** — hora **enorme**, fecha, batería y BLE.
+  - **DASHBOARD** — hora, batería/BLE y **rejilla con iconos**: pasos, distancia,
+    calorías, minutos activos y horas de pie.
 - **Fitness** — contapasos (acelerómetro MPU6886) con filtro de cadencia, distancia,
   **calorías** (metabolismo basal Mifflin-St Jeor según sexo/edad/peso/altura + activas),
   minutos activos, **horas de pie** y aviso de inactividad. Reinicio diario a medianoche;
@@ -27,7 +28,8 @@ esferas, contapasos y métricas de actividad, gesto de levantar la muñeca, avis
   teléfono, nombre grande de quien llama, pitido y opción de **colgar** desde el reloj.
 - **Hora automática (iPhone / CTS)** — sincroniza el RTC al conectar y cada día a las 04:00.
 - **TV-B-Gone** — emite la base europea de códigos POWER (122 códigos reales del proyecto
-  original) por el emisor IR para apagar casi cualquier televisor.
+  original) por el emisor IR para apagar casi cualquier televisor. Se puede **detener** a
+  media secuencia pulsando BtnB de nuevo.
 - **Brillo automático día/noche** con horas configurables.
 - **Ajustes** editables desde el reloj (con scroll): objetivo de pasos, altura, peso,
   **sexo**, **edad**, tiempo de pantalla, volteo, horas día/noche y **modo BLE ahorro**.

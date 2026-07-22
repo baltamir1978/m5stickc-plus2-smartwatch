@@ -59,6 +59,40 @@ void drawRings(M5Canvas& c, int cx, int cy, float calF, float stepF, float stand
   drawRing(c, cx, cy, 11, 17, standF, cfg::COL_RING_STAND);
 }
 
+// --- Iconos de métricas (centrados en cx,cy, ~16px) ---
+
+void icoSteps(M5Canvas& c, int cx, int cy, uint16_t col) {   // huellas
+  c.fillEllipse(cx - 3, cy - 2, 2, 4, col);
+  c.fillCircle(cx - 3, cy + 3, 2, col);
+  c.fillEllipse(cx + 3, cy, 2, 4, col);
+  c.fillCircle(cx + 3, cy + 5, 2, col);
+}
+
+void icoPin(M5Canvas& c, int cx, int cy, uint16_t col) {     // marcador (distancia)
+  c.fillCircle(cx, cy - 3, 6, col);
+  c.fillTriangle(cx - 5, cy, cx + 5, cy, cx, cy + 8, col);
+  c.fillCircle(cx, cy - 3, 2, cfg::COL_BG);                  // agujero
+}
+
+void icoFlame(M5Canvas& c, int cx, int cy, uint16_t col) {   // llama (calorías)
+  c.fillTriangle(cx, cy - 9, cx - 5, cy + 3, cx + 5, cy + 3, col);
+  c.fillCircle(cx, cy + 3, 5, col);
+  c.fillCircle(cx, cy + 4, 2, cfg::COL_BG);                  // hueco interior
+}
+
+void icoStopwatch(M5Canvas& c, int cx, int cy, uint16_t col) {  // cronómetro (activo)
+  c.drawCircle(cx, cy + 1, 7, col);
+  c.drawCircle(cx, cy + 1, 6, col);
+  c.fillRect(cx - 2, cy - 9, 4, 3, col);                     // botón
+  c.drawLine(cx, cy + 1, cx + 3, cy - 3, col);               // aguja
+}
+
+void icoPerson(M5Canvas& c, int cx, int cy, uint16_t col) {  // persona (de pie)
+  c.fillCircle(cx, cy - 6, 3, col);                          // cabeza
+  c.fillRoundRect(cx - 2, cy - 2, 4, 9, 2, col);             // cuerpo
+  c.drawFastHLine(cx - 4, cy + 8, 9, col);                   // suelo
+}
+
 }  // namespace
 
 WatchfaceScreen::WatchfaceScreen(AppContext* ctx) : Screen(ctx) {
@@ -137,22 +171,27 @@ void WatchfaceScreen::drawMinimal(M5Canvas& c) {
 
   LocalTime t = _ctx->time->now();
 
+  // Fecha en blanco, arriba-izquierda.
   char fecha[10];
   snprintf(fecha, sizeof(fecha), "%02d %s", t.day, TimeService::monthShort(t.month));
   c.setFont(&fonts::Font2);
-  c.setTextDatum(top_right);
-  c.setTextColor(cfg::COL_DIM);
-  c.drawString(fecha, W - 4, 4);
+  c.setTextDatum(top_left);
+  c.setTextColor(cfg::COL_TIME);
+  c.drawString(fecha, 6, 4);
 
+  // Batería + BLE arriba-derecha (igual que en las otras esferas).
+  drawBattery(c, W - 28, 4, _ctx->power->batteryLevel(), _ctx->power->isCharging());
+  drawBluetooth(c, W - 44, 3, _ctx->bleConnected ? cfg::COL_CYAN : cfg::COL_DIM);
+
+  // Hora ENORME (fuente 7 segmentos escalada).
   char hora[6];
   snprintf(hora, sizeof(hora), "%02d:%02d", t.hour, t.minute);
   c.setFont(&fonts::Font7);
+  c.setTextSize(1.6f);
   c.setTextDatum(middle_center);
-  c.setTextColor(cfg::COL_TIME);
-  c.drawString(hora, W / 2, H / 2);
-
-  int bat = _ctx->power->batteryLevel();
-  drawBattery(c, W - 28, H - 16, bat, _ctx->power->isCharging());
+  c.setTextColor(cfg::COL_CYAN);
+  c.drawString(hora, W / 2, H / 2 + 8);
+  c.setTextSize(1.0f);   // restaurar para el resto de pantallas
 }
 
 void WatchfaceScreen::drawDashboard(M5Canvas& c) {
@@ -162,45 +201,52 @@ void WatchfaceScreen::drawDashboard(M5Canvas& c) {
 
   LocalTime t = _ctx->time->now();
 
+  // --- Cabecera: hora (izq) + batería/BLE (der, como en la esfera principal) ---
   char hora[6];
   snprintf(hora, sizeof(hora), "%02d:%02d", t.hour, t.minute);
   c.setFont(&fonts::Font4);
   c.setTextDatum(top_left);
   c.setTextColor(cfg::COL_CYAN);
-  c.drawString(hora, 6, 6);
+  c.drawString(hora, 6, 3);
 
-  char fecha[16];
-  snprintf(fecha, sizeof(fecha), "%s %02d %s",
-           TimeService::weekdayShort(t.weekday), t.day, TimeService::monthShort(t.month));
-  c.setFont(&fonts::Font2);
-  c.setTextDatum(top_right);
-  c.setTextColor(cfg::COL_DATE);
-  c.drawString(fecha, W - 6, 10);
+  drawBattery(c, W - 28, 4, _ctx->power->batteryLevel(), _ctx->power->isCharging());
+  drawBluetooth(c, W - 44, 3, _ctx->bleConnected ? cfg::COL_CYAN : cfg::COL_DIM);
 
-  c.drawFastHLine(6, 38, W - 12, cfg::COL_DIM);
+  c.drawFastHLine(6, 26, W - 12, cfg::COL_DIM);
 
+  // --- Datos: icono (color del dato) + valor ---
   uint32_t steps = _ctx->fitness ? _ctx->fitness->steps() : 0;
   float    km    = _ctx->fitness ? _ctx->fitness->distanceMeters() / 1000.0f : 0.0f;
   int      kcal  = _ctx->fitness ? _ctx->fitness->calories() : 0;
+  uint32_t amin  = _ctx->fitness ? _ctx->fitness->activeMinutes() : 0;
+  int      stand = _ctx->fitness ? _ctx->fitness->standHours() : 0;
 
-  const int cols[3] = {W / 6, W / 2, 5 * W / 6};
-  const char* labels[3] = {"PASOS", "KM", "KCAL"};
-  const uint16_t vcol[3] = {cfg::COL_RING_STEP, cfg::COL_CYAN, cfg::COL_RING_MOVE};
-  char vals[3][12];
+  char vals[5][12];
   snprintf(vals[0], sizeof(vals[0]), "%lu", static_cast<unsigned long>(steps));
   snprintf(vals[1], sizeof(vals[1]), "%.2f", km);
   snprintf(vals[2], sizeof(vals[2]), "%d", kcal);
+  snprintf(vals[3], sizeof(vals[3]), "%lu min", static_cast<unsigned long>(amin));
+  snprintf(vals[4], sizeof(vals[4]), "%d h", stand);
+
+  const uint16_t vcol[5] = {cfg::COL_RING_STEP, cfg::COL_CYAN, cfg::COL_RING_MOVE,
+                            cfg::COL_CYAN, cfg::COL_RING_STAND};
+
+  // Fila 1: pasos, km, kcal (3 columnas). Fila 2: activo, de pie (2 centradas).
+  const int r1cols[3] = {W / 6, W / 2, 5 * W / 6};
+  const int r2cols[2] = {W / 3, 2 * W / 3};
+  const int icoY1 = 46, valY1 = 66;
+  const int icoY2 = 96, valY2 = 116;
 
   c.setTextDatum(middle_center);
-  for (int i = 0; i < 3; i++) {
-    c.setFont(&fonts::Font2);
-    c.setTextColor(cfg::COL_DIM);
-    c.drawString(labels[i], cols[i], 56);
-    c.setTextColor(vcol[i]);
-    c.drawString(vals[i], cols[i], 76);
-  }
+  c.setFont(&fonts::Font2);
 
-  int bat = _ctx->power->batteryLevel();
-  drawBattery(c, W / 2 - 12, H - 16, bat, _ctx->power->isCharging());
-  drawBluetooth(c, 8, H - 17, _ctx->bleConnected ? cfg::COL_CYAN : cfg::COL_DIM);
+  icoSteps(c, r1cols[0], icoY1, vcol[0]);
+  icoPin(c,   r1cols[1], icoY1, vcol[1]);
+  icoFlame(c, r1cols[2], icoY1, vcol[2]);
+  icoStopwatch(c, r2cols[0], icoY2, vcol[3]);
+  icoPerson(c,    r2cols[1], icoY2, vcol[4]);
+
+  for (int i = 0; i < 3; i++) { c.setTextColor(vcol[i]); c.drawString(vals[i], r1cols[i], valY1); }
+  c.setTextColor(vcol[3]); c.drawString(vals[3], r2cols[0], valY2);
+  c.setTextColor(vcol[4]); c.drawString(vals[4], r2cols[1], valY2);
 }

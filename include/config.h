@@ -38,7 +38,7 @@ constexpr int STAND_GOAL        = 12;      // horas de pie al día (anillo azul)
 constexpr int STAND_STEPS_HOUR  = 20;      // pasos en una hora para contarla como "de pie"
 
 // Umbral de cadencia para considerar un minuto como "activo" (pasos/min).
-constexpr uint32_t ACTIVE_CADENCE_SPM = 60;
+constexpr uint32_t ACTIVE_CADENCE_SPM = 40;
 
 // Recordatorio de inactividad (solo en horario activo).
 constexpr int      ACTIVE_START_HOUR   = 9;
