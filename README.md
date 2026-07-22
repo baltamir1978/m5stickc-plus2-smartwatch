@@ -32,6 +32,9 @@ esferas, contapasos y métricas de actividad, gesto de levantar la muñeca, avis
   tiempo de pantalla, volteo, horas día/noche y **modo BLE ahorro**.
 - **Modo BLE ahorro** — apaga el BLE casi todo el tiempo (sin llamadas) y solo lo
   enciende una vez al día para sincronizar la hora.
+- **Sensor ambiental ENV III** (opcional) — si se detecta al arrancar (Hat G0/G26 o
+  Grove G32/G33), añade una pantalla con **temperatura, humedad y presión**, indicando
+  el puerto por el que se conectó.
 - **Ahorro de energía** — pantalla que se apaga por inactividad (configurable) y CPU que
   baja a 80 MHz en reposo.
 
@@ -121,6 +124,7 @@ src/
   main.cpp                  Bucle principal y orquestación
   core/     PowerManager · TimeService · Settings
   sensors/  MotionService · StepDetector · GestureDetector
+  sensors/  MotionService · StepDetector · GestureDetector · EnvSensor
   fitness/  FitnessTracker
   ble/      BleService · CallAlert     (ANCS + CTS)
   utils/    IrService                  (TV-B-Gone)

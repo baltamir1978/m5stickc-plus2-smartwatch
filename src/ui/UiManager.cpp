@@ -3,6 +3,8 @@
 #include "screens/FitnessScreen.h"
 #include "screens/UtilitiesScreen.h"
 #include "screens/SettingsScreen.h"
+#include "screens/EnvScreen.h"
+#include "sensors/EnvSensor.h"
 #include "config.h"
 #include <cstdio>
 
@@ -15,6 +17,8 @@ void UiManager::begin(AppContext* ctx) {
   // BtnA cicla entre estas pantallas.
   _screens.push_back(new WatchfaceScreen(ctx));
   _screens.push_back(new FitnessScreen(ctx));
+  // Pantalla del sensor ENV III: solo si está conectado al arrancar.
+  if (ctx->env && ctx->env->present()) _screens.push_back(new EnvScreen(ctx));
   _screens.push_back(new UtilitiesScreen(ctx));
   _screens.push_back(new SettingsScreen(ctx));
   _current = 0;

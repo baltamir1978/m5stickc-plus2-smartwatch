@@ -5,6 +5,7 @@
 #include "core/Settings.h"
 #include "fitness/FitnessTracker.h"
 #include "sensors/MotionService.h"
+#include "sensors/EnvSensor.h"
 #include "ble/CallAlert.h"
 #include "ble/BleService.h"
 #include "utils/IrService.h"
@@ -16,6 +17,7 @@ static Settings       settings;
 static FitnessTracker fitness;
 static MotionService  motion;
 static CallAlert      call;
+static EnvSensor      env;
 static BleService     ble;
 static IrService      ir;
 static UiManager      ui;
@@ -34,12 +36,14 @@ void setup() {
   M5.Display.setRotation(settings.rotation());   // orientación elegida en Ajustes
   fitness.begin(&settings);
   motion.begin(&fitness);
+  env.begin();   // sondea el ENV III en el puerto Grove
 
   ctx.time     = &timeSvc;
   ctx.power    = &power;
   ctx.settings = &settings;
   ctx.fitness  = &fitness;
   ctx.call     = &call;
+  ctx.env      = &env;
   ctx.stepGoal = settings.stepGoal();
 
   ir.begin();
@@ -89,6 +93,7 @@ void loop() {
 
   // Sensores + fitness (siempre, aunque la pantalla esté apagada).
   motion.update();
+  env.update();
   LocalTime t = timeSvc.now();
   fitness.update(t);
   ctx.steps    = fitness.steps();

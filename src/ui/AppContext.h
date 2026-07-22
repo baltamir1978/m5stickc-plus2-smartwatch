@@ -7,6 +7,8 @@
 #include "../fitness/FitnessTracker.h"
 #include "../ble/CallAlert.h"
 
+class EnvSensor;
+
 // Estado compartido que las pantallas leen para dibujarse.
 struct AppContext {
   TimeService*    time     = nullptr;
@@ -14,6 +16,7 @@ struct AppContext {
   Settings*       settings = nullptr;
   FitnessTracker* fitness  = nullptr;
   CallAlert*      call     = nullptr;
+  EnvSensor*      env      = nullptr;
 
   bool     bleConnected = false;
   uint32_t steps        = 0;                      // espejo de fitness->steps() para el watchface
