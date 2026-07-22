@@ -1,6 +1,7 @@
 #include "UiManager.h"
 #include "screens/WatchfaceScreen.h"
 #include "screens/FitnessScreen.h"
+#include "screens/HistoryScreen.h"
 #include "screens/UtilitiesScreen.h"
 #include "screens/SettingsScreen.h"
 #include "screens/EnvScreen.h"
@@ -20,6 +21,7 @@ void UiManager::begin(AppContext* ctx) {
   // BtnA cicla entre estas pantallas.
   _screens.push_back(new WatchfaceScreen(ctx));
   _screens.push_back(new FitnessScreen(ctx));
+  _screens.push_back(new HistoryScreen(ctx));
   // Pantalla del sensor ENV III: solo si está conectado al arrancar.
   if (ctx->env && ctx->env->present()) _screens.push_back(new EnvScreen(ctx));
   _screens.push_back(new UtilitiesScreen(ctx));
@@ -159,6 +161,45 @@ void UiManager::drawAlarmOverlay(const char* timeStr, bool blink) {
   _canvas.setFont(&fonts::Font2);
   _canvas.setTextDatum(bottom_center);
   _canvas.drawString("BtnB: parar", W / 2, H - 4);
+
+  _canvas.pushSprite(0, 0);
+}
+
+void UiManager::drawCelebration(const char* label) {
+  const int W = _canvas.width();
+  const int H = _canvas.height();
+  _canvas.fillScreen(cfg::COL_BG);
+
+  icons::star(_canvas, W / 2, 30, cfg::COL_BOLT);
+
+  _canvas.setFont(&fonts::Font4);
+  _canvas.setTextDatum(middle_center);
+  _canvas.setTextColor(cfg::COL_RING_STEP);
+  _canvas.drawString("OBJETIVO!", W / 2, H / 2 + 6);
+
+  _canvas.setFont(&fonts::Font2);
+  _canvas.setTextColor(cfg::COL_TIME);
+  _canvas.setTextDatum(bottom_center);
+  _canvas.drawString(label, W / 2, H - 6);
+
+  _canvas.pushSprite(0, 0);
+}
+
+void UiManager::drawBanner(const char* line1, const char* line2, uint16_t color) {
+  const int W = _canvas.width();
+  const int H = _canvas.height();
+  _canvas.fillScreen(cfg::COL_BG);
+  _canvas.drawRect(2, 2, W - 4, H - 4, color);
+  _canvas.drawRect(3, 3, W - 6, H - 6, color);
+
+  _canvas.setFont(&fonts::Font4);
+  _canvas.setTextDatum(middle_center);
+  _canvas.setTextColor(color);
+  _canvas.drawString(line1, W / 2, H / 2 - 10);
+
+  _canvas.setFont(&fonts::Font2);
+  _canvas.setTextColor(cfg::COL_TIME);
+  _canvas.drawString(line2, W / 2, H / 2 + 16);
 
   _canvas.pushSprite(0, 0);
 }

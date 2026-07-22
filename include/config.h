@@ -70,7 +70,8 @@ constexpr uint16_t COL_RING_STAND = 0x05FF; // cian (anillo de pie)
 constexpr uint16_t COL_BAT_LOW = 0xF800;  // rojo
 constexpr uint16_t COL_DIM     = 0x52AA;  // gris oscuro
 
-constexpr int BATTERY_LOW_PCT = 20;       // umbral de batería baja
-constexpr int BATTERY_MID_PCT = 40;       // umbral de batería media (naranja)
+constexpr int BATTERY_LOW_PCT  = 20;      // umbral de batería baja (color rojo)
+constexpr int BATTERY_MID_PCT  = 40;      // umbral de batería media (naranja)
+constexpr int BATTERY_WARN_PCT = 10;      // umbral del aviso de batería baja
 
 }  // namespace cfg

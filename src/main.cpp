@@ -126,6 +126,31 @@ static bool handleAlarm(const LocalTime& t) {
   return true;
 }
 
+// Celebración breve al alcanzar un objetivo (melodía ascendente + aviso).
+static void handleCelebration(int c) {
+  static const char* labels[] = {"", "PASOS", "CALORIAS", "DE PIE"};
+  if (c < 1 || c > 3) return;
+  if (!power.screenOn()) power.wake();
+  power.notifyActivity();
+  ui.drawCelebration(labels[c]);
+  M5.Speaker.tone(2000, 150); delay(160);
+  M5.Speaker.tone(2600, 150); delay(160);
+  M5.Speaker.tone(3200, 250); delay(300);
+  delay(900);
+  ui.forceRedraw();
+}
+
+// Aviso de batería baja (dos pitidos + banner), una vez al cruzar el umbral.
+static void handleLowBattery() {
+  if (!power.screenOn()) power.wake();
+  power.notifyActivity();
+  ui.drawBanner("BATERIA", "baja", cfg::COL_BAT_LOW);
+  M5.Speaker.tone(1200, 300); delay(350);
+  M5.Speaker.tone(1000, 300); delay(350);
+  delay(700);
+  ui.forceRedraw();
+}
+
 void loop() {
   M5.update();
   power.update();
@@ -165,6 +190,19 @@ void loop() {
   bool nowAlarm = handleAlarm(t);
   if (nowAlarm) { wasAlarm = true; delay(20); return; }
   if (wasAlarm) { wasAlarm = false; ui.forceRedraw(); }
+
+  // Celebración de objetivos (pasos / calorías / de pie).
+  if (int celeb = fitness.consumeCelebration()) handleCelebration(celeb);
+
+  // Aviso de batería baja (una vez al cruzar el umbral; se rearma al cargar/subir).
+  static bool lowWarned = false;
+  int batLvl = power.batteryLevel();
+  bool charging = power.isCharging();
+  if (!charging && batLvl >= 0 && batLvl <= cfg::BATTERY_WARN_PCT && !lowWarned) {
+    lowWarned = true;
+    handleLowBattery();
+  }
+  if (charging || batLvl > cfg::BATTERY_WARN_PCT + 5) lowWarned = false;
 
   // Aviso de inactividad: doble pitido.
   if (fitness.consumeInactivityAlert()) {

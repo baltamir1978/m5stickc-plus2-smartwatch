@@ -27,9 +27,13 @@ public:
   int      calories() const;         // total del día = basal (BMR prorrateado) + activas
   uint32_t activeMinutes() const  { return _activeMinutes; }
   int      standHours() const     { return __builtin_popcount(_stoodMask); }  // horas del día con actividad
+  uint32_t histDay(int i) const   { return (i >= 0 && i < 6) ? _hist[i] : 0; } // 0=hace 6 días .. 5=ayer
 
   // Devuelve true una sola vez cuando se supera el umbral de inactividad.
   bool consumeInactivityAlert();
+
+  // Objetivo recién alcanzado (una vez): 0 nada · 1 pasos · 2 calorías · 3 de pie.
+  int consumeCelebration();
 
 private:
   void save(bool force);
@@ -48,6 +52,9 @@ private:
   uint32_t _stoodMask      = 0;    // bitmask de horas del día "de pie"
   uint32_t _lastStepMs     = 0;
   uint32_t _lastSavedSteps = 0;
+  uint32_t _hist[6]        = {0};   // pasos de los 6 días completos anteriores
   bool     _inactivityFired = false;
   bool     _alertPending    = false;
+  bool     _fStep = false, _fCal = false, _fStand = false;  // objetivos ya celebrados hoy
+  int      _celeb = 0;                                       // celebración pendiente
 };

@@ -23,6 +23,9 @@ esferas, contapasos y métricas de actividad, gesto de levantar la muñeca, avis
   **calorías** (metabolismo basal Mifflin-St Jeor según sexo/edad/peso/altura + activas),
   minutos activos, **horas de pie** y aviso de inactividad. Reinicio diario a medianoche;
   los datos del día sobreviven a reinicios.
+- **Historial semanal** — gráfica de barras de los pasos de los últimos 7 días.
+- **Celebración de objetivos** — melodía + estrella al alcanzar pasos, calorías o horas de pie.
+- **Aviso de batería baja** al 10 % (dos pitidos + banner).
 - **Wrist-raise** — girar la muñeca (giroscopio) enciende la pantalla; respeta el volteo.
 - **Linterna** — pantalla en blanco a máximo brillo.
 - **Cronómetro** — iniciar/pausar (BtnB) y poner a cero (mantener BtnB).

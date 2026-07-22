@@ -52,6 +52,11 @@ inline void bellSmall(M5Canvas& c, int cx, int cy, uint16_t col) {  // campana p
   c.fillCircle(cx, cy + 6, 2, col);                              // badajo
 }
 
+inline void star(M5Canvas& c, int cx, int cy, uint16_t col) {   // estrella (celebración)
+  c.fillTriangle(cx, cy - 9, cx - 8, cy + 5, cx + 8, cy + 5, col);
+  c.fillTriangle(cx, cy + 9, cx - 8, cy - 5, cx + 8, cy - 5, col);
+}
+
 // Televisor con antenas (verde) y aspa roja delante (TV-B-Gone). Icono grande.
 inline void tv(M5Canvas& c, int cx, int cy) {
   const uint16_t green = cfg::COL_ACCENT;

@@ -27,6 +27,10 @@ public:
   // Overlay de alarma (parpadea con blink).
   void drawAlarmOverlay(const char* timeStr, bool blink);
 
+  // Aviso de objetivo alcanzado y banner genérico (batería baja, etc.).
+  void drawCelebration(const char* label);
+  void drawBanner(const char* line1, const char* line2, uint16_t color);
+
 private:
   void render();
 

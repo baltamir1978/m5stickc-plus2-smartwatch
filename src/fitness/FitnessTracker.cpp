@@ -10,6 +10,7 @@ void FitnessTracker::begin(Settings* settings) {
   _steps         = _prefs.getUInt("steps", 0);
   _activeMinutes = _prefs.getUInt("active", 0);
   _stoodMask     = _prefs.getUInt("stood", 0);
+  _prefs.getBytes("hist", _hist, sizeof(_hist));   // histórico semanal (0 si no existe)
   _lastSavedSteps = _steps;
 }
 
@@ -35,6 +36,11 @@ void FitnessTracker::update(const LocalTime& t) {
   if (_dayKey < 0) {
     _dayKey = today;
   } else if (today != _dayKey) {
+    // Guardar el día que termina en el histórico semanal (desplaza y añade).
+    for (int i = 0; i < 5; i++) _hist[i] = _hist[i + 1];
+    _hist[5] = _steps;
+    _prefs.putBytes("hist", _hist, sizeof(_hist));
+
     _steps = 0;
     _activeMinutes = 0;
     _stepsThisMinute = 0;
@@ -42,9 +48,16 @@ void FitnessTracker::update(const LocalTime& t) {
     _stoodMask = 0;
     _lastSavedSteps = 0;
     _inactivityFired = false;
+    _fStep = _fCal = _fStand = false;   // rearmar celebraciones
+    _celeb = 0;
     _dayKey = today;
     save(true);
   }
+
+  // Celebraciones de objetivos (una vez al día cada uno).
+  if (!_fStep && _settings && _steps >= _settings->stepGoal()) { _fStep = true; _celeb = 1; }
+  if (!_fCal && activeCalories() >= cfg::CALORIE_GOAL)         { _fCal = true;  _celeb = 2; }
+  if (!_fStand && standHours() >= cfg::STAND_GOAL)            { _fStand = true; _celeb = 3; }
 
   _secondsToday = t.hour * 3600u + t.minute * 60u + t.second;
 
@@ -107,6 +120,12 @@ bool FitnessTracker::consumeInactivityAlert() {
     return true;
   }
   return false;
+}
+
+int FitnessTracker::consumeCelebration() {
+  int c = _celeb;
+  _celeb = 0;
+  return c;   // 0 nada · 1 pasos · 2 calorías · 3 de pie
 }
 
 void FitnessTracker::save(bool force) {
