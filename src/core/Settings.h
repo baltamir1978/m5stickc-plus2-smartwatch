@@ -11,12 +11,22 @@ public:
   int      height()   const { return _height; }    // cm
   int      weight()   const { return _weight; }    // kg
   uint32_t stepGoal() const { return _goal; }
-  uint8_t  rotation() const { return _rotation; }  // 1 o 3 (landscape)
+  bool     flipped()  const { return _flip; }
+  uint8_t  rotation() const { return _flip ? 1 : 3; }      // 3 = normal, 1 = volteada
+  int      screenSecs() const { return _screenSecs; }      // segundos de pantalla encendida
+  uint32_t screenTimeoutMs() const { return static_cast<uint32_t>(_screenSecs) * 1000; }
+  int      dayHour()   const { return _dayHour; }          // hora de inicio del brillo de día
+  int      nightHour() const { return _nightHour; }        // hora de inicio del brillo de noche
+  bool     bleSaver()  const { return _bleSaver; }         // BLE apagado salvo sync diario
 
   void setHeight(int cm);
   void setWeight(int kg);
   void setStepGoal(uint32_t goal);
-  void toggleRotation();   // alterna 1 <-> 3 y persiste
+  void toggleFlip();            // gira la pantalla 180° y persiste
+  void cycleScreenTimeout();    // 5 -> 10 -> 15 -> 30 -> 60 -> 5 s y persiste
+  void cycleDayHour();          // +1 h (0..23) y persiste
+  void cycleNightHour();        // +1 h (0..23) y persiste
+  void toggleBleSaver();        // BLE ahorro <-> siempre y persiste
 
   // Rangos y pasos de edición.
   static constexpr int      HEIGHT_MIN = 120, HEIGHT_MAX = 220;
@@ -25,8 +35,12 @@ public:
 
 private:
   Preferences _prefs;
-  int      _height   = 181;
-  int      _weight   = 100;
-  uint32_t _goal     = 10000;
-  uint8_t  _rotation = 3;
+  int      _height     = 181;
+  int      _weight     = 100;
+  uint32_t _goal       = 10000;
+  bool     _flip       = false;
+  int      _screenSecs = 5;
+  int      _dayHour    = 8;
+  int      _nightHour  = 21;
+  bool     _bleSaver   = false;
 };

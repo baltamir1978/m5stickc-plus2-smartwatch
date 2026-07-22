@@ -14,21 +14,26 @@ esferas, contapasos y métricas de actividad, gesto de levantar la muñeca, avis
 ## Características
 
 - **Reloj** con 3 esferas digitales conmutables (persisten en memoria):
-  - **CLEAN** — hora grande, fecha, estado y pasos.
+  - **CLEAN** — hora grande en color, fecha, iconos de estado y **3 anillos de
+    actividad estilo Apple** (calorías / pasos / horas de pie) + distancia.
   - **MINIMAL** — solo la hora, enorme.
   - **DASHBOARD** — hora + rejilla de pasos, distancia y calorías.
-- **Fitness** — contapasos (acelerómetro MPU6886), distancia, calorías, minutos
-  activos y aviso de inactividad. Reinicio diario a medianoche; los pasos del día
-  sobreviven a reinicios.
-- **Wrist-raise** — al levantar la muñeca se enciende la pantalla.
-- **Llamadas entrantes (iPhone / ANCS)** — overlay a pantalla completa con el nombre
-  de quien llama, pitido y opción de **colgar** desde el reloj.
+- **Fitness** — contapasos (acelerómetro MPU6886) con filtro de cadencia, distancia,
+  calorías, minutos activos, **horas de pie** y aviso de inactividad. Reinicio diario a
+  medianoche; los datos del día sobreviven a reinicios.
+- **Wrist-raise** — girar la muñeca (giroscopio) enciende la pantalla; respeta el volteo.
+- **Llamadas entrantes (iPhone / ANCS)** — overlay a pantalla completa con icono de
+  teléfono, nombre grande de quien llama, pitido y opción de **colgar** desde el reloj.
 - **Hora automática (iPhone / CTS)** — sincroniza el RTC al conectar y cada día a las 04:00.
-- **TV-B-Gone** — emite códigos POWER de varias marcas por el emisor IR para apagar TVs.
-- **Ajustes** — altura, peso y objetivo de pasos, editables desde el reloj y guardados
-  en memoria.
-- **Ahorro de energía** — pantalla que se apaga por inactividad y CPU que baja a 80 MHz
-  en reposo.
+- **TV-B-Gone** — emite la base europea de códigos POWER (122 códigos reales del proyecto
+  original) por el emisor IR para apagar casi cualquier televisor.
+- **Brillo automático día/noche** con horas configurables.
+- **Ajustes** editables desde el reloj (con scroll): objetivo de pasos, altura, peso,
+  tiempo de pantalla, volteo, horas día/noche y **modo BLE ahorro**.
+- **Modo BLE ahorro** — apaga el BLE casi todo el tiempo (sin llamadas) y solo lo
+  enciende una vez al día para sincronizar la hora.
+- **Ahorro de energía** — pantalla que se apaga por inactividad (configurable) y CPU que
+  baja a 80 MHz en reposo.
 
 ## Hardware
 
@@ -137,6 +142,8 @@ Detalle de arquitectura y decisiones de diseño en [`ARCHITECTURE.md`](ARCHITECT
 - La autonomía es modesta (batería de 200 mAh); el BLE conectado es el mayor consumo.
 - El contapasos y los umbrales de wrist-raise pueden necesitar ajuste según cómo se
   lleve el reloj.
-- El TV-B-Gone incluye un conjunto de marcas mayoritarias (Samsung, LG, Sony,
-  Panasonic, Philips, Toshiba); ampliable en `src/utils/IrService.cpp`.
+- El TV-B-Gone porta la base **europea** del proyecto original de Mitch Altman / Ken
+  Shirriff (122 códigos POWER reales; ver cita de la fuente en `src/utils/TvbGoneEU.h`).
+  Los 16 códigos "no modulados" del dataset se omiten a propósito (el emisor no puede
+  reproducirlos fielmente).
 - Las notificaciones BLE están limitadas **a propósito** a las llamadas entrantes.

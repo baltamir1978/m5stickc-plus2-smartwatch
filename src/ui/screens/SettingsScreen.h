@@ -14,6 +14,6 @@ public:
   void onButtonBHold() override;
 
 private:
-  enum Field { GOAL = 0, HEIGHT, WEIGHT, FLIP, FIELD_COUNT };
+  enum Field { GOAL = 0, HEIGHT, WEIGHT, TIMEOUT, FLIP, DAY, NIGHT, BLE, FIELD_COUNT };
   int _field = GOAL;
 };

@@ -1,23 +1,20 @@
 #pragma once
 #include <cstdint>
 
-// Detección de "wrist-raise": levantar la muñeca para mirar el reloj.
+// Detección de "girar la muñeca para leer la hora".
 //
-// Estrategia: se suaviza la componente del acelerómetro normal a la pantalla
-// (gravedad en Z) para conocer la orientación, y se exige que el gesto venga
-// acompañado de movimiento reciente (para no dispararlo al dejar el reloj boca
-// arriba sobre una mesa). Emite el evento una sola vez al entrar en la zona de
-// "mirando", y no vuelve a armarse hasta que el brazo baja.
+// En vez de la orientación absoluta (que falla si ya partías con la pantalla hacia
+// arriba, p.ej. tecleando), detecta el GIRO en sí: un pico de velocidad angular
+// (giroscopio) que, al asentarse, deja la pantalla mirando al usuario (accelZ alto).
 class GestureDetector {
 public:
   void reset();
 
-  // Devuelve true una única vez cuando se detecta que se ha levantado la muñeca.
-  bool update(float az, float mag, uint32_t nowMs);
+  // gyroMag = módulo de la velocidad angular (°/s); accelZ = componente Z del acelerómetro.
+  // Devuelve true una vez cuando se detecta el gesto.
+  bool update(float gyroMag, float accelZ, uint32_t nowMs);
 
 private:
-  bool     _init = false;
-  float    _gz = 0.0f;           // gravedad suavizada en el eje normal a la pantalla
-  bool     _viewing = false;
-  uint32_t _lastMotionMs = 0;
+  bool     _turning = false;
+  uint32_t _lastFire = 0;
 };

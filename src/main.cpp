@@ -58,6 +58,12 @@ static bool handleCall() {
   static uint32_t lastDraw = 0;
   static bool     blink = false;
 
+  // En modo ahorro no se muestran las llamadas.
+  if (settings.bleSaver()) {
+    if (call.active()) call.clear();
+    return false;
+  }
+
   if (!call.active()) return false;
 
   if (!power.screenOn()) power.wake();
@@ -87,8 +93,16 @@ void loop() {
   fitness.update(t);
   ctx.steps    = fitness.steps();
   ctx.stepGoal = settings.stepGoal();
+  power.setInactivityMs(settings.screenTimeoutMs());
+  motion.setFlipped(settings.flipped());
 
-  // BLE.
+  // Brillo automático día/noche según la hora y las horas configuradas.
+  bool day = (t.hour >= settings.dayHour() && t.hour < settings.nightHour());
+  power.setBrightness(day ? cfg::BRIGHTNESS_DAY : cfg::BRIGHTNESS_NIGHT);
+
+  // BLE: en modo ahorro se apaga salvo cuando toca sincronizar la hora (1x/día).
+  bool bleWanted = !settings.bleSaver() || timeSvc.needsSync();
+  ble.setActive(bleWanted);
   ble.update();
   ctx.bleConnected = ble.connected();
 

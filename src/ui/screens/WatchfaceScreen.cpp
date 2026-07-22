@@ -4,7 +4,7 @@
 #include <cstdio>
 #include <algorithm>
 
-// ---------- Iconos dibujados con primitivas ----------
+// ---------- Iconos y anillos dibujados con primitivas ----------
 namespace {
 
 uint16_t batteryColor(int level, bool charging) {
@@ -14,7 +14,7 @@ uint16_t batteryColor(int level, bool charging) {
   return cfg::COL_ACCENT;
 }
 
-// Batería con relleno proporcional + terminal; rayo si está cargando.
+// Batería con relleno proporcional + terminal; rayo amarillo si está cargando.
 void drawBattery(M5Canvas& c, int x, int y, int level, bool charging) {
   const int w = 24, h = 12;
   uint16_t col = batteryColor(level, charging);
@@ -23,10 +23,10 @@ void drawBattery(M5Canvas& c, int x, int y, int level, bool charging) {
   int lv = level < 0 ? 0 : (level > 100 ? 100 : level);
   int fill = (w - 4) * lv / 100;
   if (fill > 0) c.fillRect(x + 2, y + 2, fill, h - 4, col);
-  if (charging) {                                   // rayo (hueco sobre el relleno)
-    int bx = x + w / 2;
-    c.fillTriangle(bx + 1, y + 1, bx - 3, y + h / 2 + 1, bx + 1, y + h / 2, cfg::COL_BG);
-    c.fillTriangle(bx - 1, y + h - 1, bx + 3, y + h / 2 - 1, bx - 1, y + h / 2, cfg::COL_BG);
+  if (charging) {                                   // rayo amarillo, bien visible
+    int bx = x + w / 2, by = y + 1, bh = h - 2, mid = by + bh / 2;
+    c.fillTriangle(bx + 2, by,      bx - 3, mid,     bx + 1, mid,      cfg::COL_BOLT);
+    c.fillTriangle(bx - 2, by + bh, bx + 3, mid,     bx - 1, mid,      cfg::COL_BOLT);
   }
 }
 
@@ -36,27 +36,27 @@ void drawBluetooth(M5Canvas& c, int x, int y, uint16_t col) {
   int cx = x + 4, top = y, bot = y + H, mid = y + H / 2;
   int q1 = y + H / 4, q3 = y + 3 * H / 4;
   int rx = x + 7, lx = x + 1;
-  c.drawLine(cx, top, cx, bot, col);   // espina
+  c.drawLine(cx, top, cx, bot, col);
   c.drawLine(cx, top, rx, q1, col);
   c.drawLine(rx, q1, lx, q3, col);
   c.drawLine(lx, q1, rx, q3, col);
   c.drawLine(rx, q3, cx, bot, col);
 }
 
-// Dos huellas de pie.
-void drawFootsteps(M5Canvas& c, int x, int y, uint16_t col) {
-  c.fillEllipse(x + 3, y + 4, 2, 4, col);
-  c.fillCircle(x + 3, y + 9, 2, col);
-  c.fillEllipse(x + 9, y + 6, 2, 4, col);
-  c.fillCircle(x + 9, y + 11, 2, col);
+// Un anillo: pista tenue (círculo completo) + arco de progreso proporcional.
+void drawRing(M5Canvas& c, int cx, int cy, int r0, int r1, float frac, uint16_t col) {
+  c.fillArc(cx, cy, r0, r1, 0, 360, cfg::COL_DIM);
+  if (frac > 0.0f) {
+    if (frac > 1.0f) frac = 1.0f;
+    c.fillArc(cx, cy, r0, r1, 0, static_cast<int>(360.0f * frac), col);
+  }
 }
 
-// Icono de calendario simple.
-void drawCalendar(M5Canvas& c, int x, int y, uint16_t col) {
-  c.drawRoundRect(x, y + 1, 13, 12, 2, col);
-  c.fillRect(x, y + 1, 13, 4, col);   // cabecera
-  c.drawLine(x + 3, y, x + 3, y + 2, col);
-  c.drawLine(x + 9, y, x + 9, y + 2, col);
+// 3 anillos concéntricos estilo Apple: calorías (fuera), pasos (medio), de pie (dentro).
+void drawRings(M5Canvas& c, int cx, int cy, float calF, float stepF, float standF) {
+  drawRing(c, cx, cy, 27, 33, calF,   cfg::COL_RING_MOVE);
+  drawRing(c, cx, cy, 19, 25, stepF,  cfg::COL_RING_STEP);
+  drawRing(c, cx, cy, 11, 17, standF, cfg::COL_RING_STAND);
 }
 
 }  // namespace
@@ -90,49 +90,44 @@ void WatchfaceScreen::drawClean(M5Canvas& c) {
   int  bat = _ctx->power->batteryLevel();
   bool chg = _ctx->power->isCharging();
 
-  // --- Barra superior: fecha (izq, con icono) · BLE + batería (der, iconos) ---
-  drawCalendar(c, 6, 6, cfg::COL_CYAN);
+  // --- Fecha (grande, arriba-izquierda) ---
   char fecha[16];
   snprintf(fecha, sizeof(fecha), "%s %02d %s",
            TimeService::weekdayShort(t.weekday), t.day, TimeService::monthShort(t.month));
-  c.setFont(&fonts::Font2);
+  c.setFont(&fonts::Font4);
   c.setTextDatum(top_left);
   c.setTextColor(cfg::COL_DATE);
-  c.drawString(fecha, 24, 4);
+  c.drawString(fecha, 6, 2);
 
-  drawBattery(c, W - 28, 5, bat, chg);
+  // --- Batería (con rayo) + BLE, arriba-derecha ---
+  drawBattery(c, W - 28, 4, bat, chg);
   drawBluetooth(c, W - 44, 3, _ctx->bleConnected ? cfg::COL_CYAN : cfg::COL_DIM);
 
-  // --- Hora HH:MM (grande, cian) ---
+  // --- Hora HH:MM (izquierda, cian) ---
   char hora[6];
   snprintf(hora, sizeof(hora), "%02d:%02d", t.hour, t.minute);
   c.setFont(&fonts::Font7);
   c.setTextDatum(middle_center);
   c.setTextColor(cfg::COL_CYAN);
-  c.drawString(hora, W / 2, H / 2 - 2);
+  c.drawString(hora, 78, 62);
 
-  // --- Pie: huellas + pasos + % + barra de progreso ---
+  // --- 3 anillos de actividad (derecha) ---
   uint32_t steps = _ctx->fitness ? _ctx->fitness->steps() : 0;
-  drawFootsteps(c, 6, H - 34, cfg::COL_ACCENT);
-  char pasosStr[12];
-  snprintf(pasosStr, sizeof(pasosStr), "%lu", static_cast<unsigned long>(steps));
-  c.setFont(&fonts::Font2);
-  c.setTextDatum(middle_left);
+  int      kcal  = _ctx->fitness ? _ctx->fitness->calories() : 0;
+  int      stand = _ctx->fitness ? _ctx->fitness->standHours() : 0;
+  float calF   = (cfg::CALORIE_GOAL > 0) ? static_cast<float>(kcal) / cfg::CALORIE_GOAL : 0;
+  float stepF  = (_ctx->stepGoal > 0)    ? static_cast<float>(steps) / _ctx->stepGoal : 0;
+  float standF = (cfg::STAND_GOAL > 0)   ? static_cast<float>(stand) / cfg::STAND_GOAL : 0;
+  drawRings(c, 198, 62, calF, stepF, standF);
+
+  // --- Distancia (abajo) ---
+  float km = _ctx->fitness ? _ctx->fitness->distanceMeters() / 1000.0f : 0.0f;
+  char dist[16];
+  snprintf(dist, sizeof(dist), "%.2f km", km);
+  c.setFont(&fonts::Font4);
+  c.setTextDatum(bottom_left);
   c.setTextColor(cfg::COL_TIME);
-  c.drawString(pasosStr, 24, H - 24);
-
-  int pct = (_ctx->stepGoal > 0)
-                ? std::min(100, static_cast<int>(steps * 100 / _ctx->stepGoal)) : 0;
-  char pctStr[6];
-  snprintf(pctStr, sizeof(pctStr), "%d%%", pct);
-  c.setTextDatum(middle_right);
-  c.setTextColor(cfg::COL_ACCENT);
-  c.drawString(pctStr, W - 6, H - 24);
-
-  const int barX = 6, barY = H - 11, barW = W - 12, barH = 8;
-  c.drawRoundRect(barX, barY, barW, barH, 3, cfg::COL_DIM);
-  int fillW = (barW - 2) * pct / 100;
-  if (fillW > 0) c.fillRoundRect(barX + 1, barY + 1, fillW, barH - 2, 2, cfg::COL_ACCENT);
+  c.drawString(dist, 6, H - 1);
 }
 
 void WatchfaceScreen::drawMinimal(M5Canvas& c) {
@@ -190,7 +185,7 @@ void WatchfaceScreen::drawDashboard(M5Canvas& c) {
 
   const int cols[3] = {W / 6, W / 2, 5 * W / 6};
   const char* labels[3] = {"PASOS", "KM", "KCAL"};
-  const uint16_t vcol[3] = {cfg::COL_ACCENT, cfg::COL_CYAN, cfg::COL_ORANGE};
+  const uint16_t vcol[3] = {cfg::COL_RING_STEP, cfg::COL_CYAN, cfg::COL_RING_MOVE};
   char vals[3][12];
   snprintf(vals[0], sizeof(vals[0]), "%lu", static_cast<unsigned long>(steps));
   snprintf(vals[1], sizeof(vals[1]), "%.2f", km);

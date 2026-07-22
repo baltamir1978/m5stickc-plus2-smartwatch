@@ -6,12 +6,39 @@ void Settings::begin() {
   _height = _prefs.getInt("height", static_cast<int>(cfg::USER_HEIGHT_CM));
   _weight = _prefs.getInt("weight", static_cast<int>(cfg::USER_WEIGHT_KG));
   _goal   = _prefs.getUInt("goal", cfg::STEP_GOAL_DEFAULT);
-  _rotation = _prefs.getUChar("rot", cfg::SCREEN_ROTATION);
+  _flip = _prefs.getBool("flip", false);
+  _screenSecs = _prefs.getInt("scrsec", cfg::INACTIVITY_MS / 1000);
+  _dayHour = _prefs.getInt("dayh", cfg::DAY_START_HOUR);
+  _nightHour = _prefs.getInt("nighth", cfg::NIGHT_START_HOUR);
+  _bleSaver = _prefs.getBool("blesv", false);
 }
 
-void Settings::toggleRotation() {
-  _rotation = (_rotation == 1) ? 3 : 1;
-  _prefs.putUChar("rot", _rotation);
+void Settings::toggleBleSaver() {
+  _bleSaver = !_bleSaver;
+  _prefs.putBool("blesv", _bleSaver);
+}
+
+void Settings::cycleDayHour() {
+  _dayHour = (_dayHour + 1) % 24;
+  _prefs.putInt("dayh", _dayHour);
+}
+
+void Settings::cycleNightHour() {
+  _nightHour = (_nightHour + 1) % 24;
+  _prefs.putInt("nighth", _nightHour);
+}
+
+void Settings::toggleFlip() {
+  _flip = !_flip;
+  _prefs.putBool("flip", _flip);
+}
+
+void Settings::cycleScreenTimeout() {
+  static const int opts[] = {5, 10, 15, 30, 60};
+  int i = 0;
+  for (; i < 5; i++) if (opts[i] == _screenSecs) break;
+  _screenSecs = opts[(i + 1) % 5];
+  _prefs.putInt("scrsec", _screenSecs);
 }
 
 void Settings::setHeight(int cm) {

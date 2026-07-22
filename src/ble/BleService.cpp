@@ -47,7 +47,7 @@ void BleService::begin(TimeService* time, CallAlert* call, const char* deviceNam
 
   _server = NimBLEDevice::createServer();
   _server->setCallbacks(new ServerCallbacks(this));
-  _server->advertiseOnDisconnect(true);
+  _server->advertiseOnDisconnect(false);      // gestionamos el advertising a mano (modo ahorro)
 
   NimBLEAdvertising* adv = _server->getAdvertising();
   NimBLEAdvertisementData advData;
@@ -59,13 +59,33 @@ void BleService::begin(TimeService* time, CallAlert* call, const char* deviceNam
   scanData.setName(deviceName);
   adv->setScanResponseData(scanData);
   adv->enableScanResponse(true);
-  adv->start();
-  Serial.printf("[BLE] Advertising como '%s'. Esperando al iPhone...\n", deviceName);
+
+  applyState();   // arranca el advertising si estamos activos
+  Serial.printf("[BLE] Listo como '%s'.\n", deviceName);
+}
+
+void BleService::applyState() {
+  NimBLEAdvertising* adv = NimBLEDevice::getAdvertising();
+  if (_wantActive) {
+    if (!_connected && !_advertising) {
+      adv->start();
+      _advertising = true;
+      Serial.println("[BLE] Advertising ON. Esperando al iPhone...");
+    }
+  } else {
+    if (_advertising) {
+      adv->stop();
+      _advertising = false;
+      Serial.println("[BLE] Advertising OFF (ahorro).");
+    }
+    if (_connected && _client) _client->disconnect();
+  }
 }
 
 void BleService::handleConnect(NimBLEServer* server, NimBLEConnInfo& info) {
   _client = server->getClient(info);
   _connected = true;
+  _advertising = false;   // NimBLE detiene el advertising al conectar
   _state = CONNECTED;
   _lastDiscoveryMs = 0;
   Serial.println("[BLE] iPhone conectado. Descubriendo ANCS/CTS...");
@@ -78,11 +98,13 @@ void BleService::handleDisconnect() {
   _ns = _ds = _cp = _cts = nullptr;
   _callUidValid = false;
   _fetchTitle = false;
+  _advertising = false;   // sin auto-readvertise; applyState() lo reactivará si toca
   if (_call) _call->clear();
   Serial.println("[BLE] Desconectado.");
 }
 
 void BleService::update() {
+  applyState();   // enciende/apaga el advertising según el modo
   if (!_connected || _client == nullptr) return;
 
   if (_state == CONNECTED) {

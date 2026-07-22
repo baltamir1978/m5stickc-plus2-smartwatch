@@ -14,10 +14,14 @@ public:
   // Devuelve true una vez cuando se ha detectado un wrist-raise (para despertar pantalla).
   bool consumeWristRaise();
 
+  // Si la pantalla está volteada, el gesto invierte el eje Z (orientación "mirando").
+  void setFlipped(bool f) { _flip = f; }
+
 private:
   FitnessTracker* _fitness = nullptr;
   StepDetector    _step;
   GestureDetector _gesture;
   bool            _enabled = false;
   bool            _wristRaise = false;
+  bool            _flip = false;
 };

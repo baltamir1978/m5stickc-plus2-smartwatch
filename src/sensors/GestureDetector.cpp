@@ -1,33 +1,25 @@
 #include "sensors/GestureDetector.h"
 #include "config.h"
-#include <cmath>
 
 void GestureDetector::reset() {
-  _init = false;
-  _viewing = false;
-  _lastMotionMs = 0;
+  _turning = false;
+  _lastFire = 0;
 }
 
-bool GestureDetector::update(float az, float mag, uint32_t nowMs) {
-  if (!_init) {
-    _gz = az;
-    _init = true;
+bool GestureDetector::update(float gyroMag, float accelZ, uint32_t nowMs) {
+  // Pico de giro por encima del umbral => estamos rotando la muñeca.
+  if (gyroMag > cfg::WRIST_TURN_DPS) {
+    _turning = true;
     return false;
   }
 
-  // Orientación suavizada (gravedad en el eje normal a la pantalla).
-  _gz += (az - _gz) * 0.2f;
-
-  // ¿Hubo movimiento reciente? (|accel| se aparta de 1 g en reposo)
-  if (fabsf(mag - 1.0f) > cfg::WRIST_MOTION_G) _lastMotionMs = nowMs;
-  const bool recentMotion = (nowMs - _lastMotionMs) < cfg::WRIST_MOTION_WIN_MS;
-
-  bool event = false;
-  if (!_viewing && _gz > cfg::WRIST_VIEW_Z && recentMotion) {
-    _viewing = true;
-    event = true;
-  } else if (_viewing && _gz < cfg::WRIST_DOWN_Z) {
-    _viewing = false;  // brazo bajado: rearmar
+  // El giro se asienta (quieto de nuevo): si termina mirando la pantalla, disparar.
+  if (_turning && gyroMag < cfg::WRIST_STILL_DPS) {
+    _turning = false;
+    if (accelZ > cfg::WRIST_MIN_Z && (nowMs - _lastFire) > cfg::WRIST_REFRACTORY_MS) {
+      _lastFire = nowMs;
+      return true;
+    }
   }
-  return event;
+  return false;
 }

@@ -70,16 +70,28 @@ void UiManager::drawCallOverlay(const char* caller, bool blink) {
   const int H = _canvas.height();
   _canvas.fillScreen(blink ? cfg::COL_BAT_LOW : cfg::COL_BG);
 
+  // Icono de smartphone grande (arriba, centrado).
+  uint16_t icol = cfg::COL_TIME;
+  const int pw = 28, ph = 46;
+  const int px = W / 2 - pw / 2, py = 6;
+  _canvas.drawRoundRect(px, py, pw, ph, 5, icol);
+  _canvas.drawRoundRect(px + 1, py + 1, pw - 2, ph - 2, 5, icol);   // borde más grueso
+  _canvas.fillRect(px + pw / 2 - 4, py + 5, 8, 2, icol);            // auricular
+  _canvas.fillCircle(px + pw / 2, py + ph - 6, 2, icol);           // botón
+
   _canvas.setTextColor(cfg::COL_TIME);
-  _canvas.setFont(&fonts::Font4);
+  _canvas.setFont(&fonts::Font2);
+  _canvas.setTextDatum(top_center);
+  _canvas.drawString("LLAMADA", W / 2, py + ph + 2);
+
+  _canvas.setFont(&fonts::Font4);       // nombre de quien llama, grande
   _canvas.setTextDatum(middle_center);
-  _canvas.drawString("LLAMADA", W / 2, 28);
+  _canvas.drawString(caller, W / 2, H - 34);
 
   _canvas.setFont(&fonts::Font2);
-  _canvas.drawString(caller, W / 2, H / 2 + 6);
-
   _canvas.setTextColor(cfg::COL_DATE);
-  _canvas.drawString("BtnB: colgar", W / 2, H - 14);
+  _canvas.setTextDatum(bottom_center);
+  _canvas.drawString("BtnB: colgar", W / 2, H - 4);
 
   _canvas.pushSprite(0, 0);
 }

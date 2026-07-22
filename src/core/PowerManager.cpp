@@ -5,12 +5,18 @@
 void PowerManager::begin() {
   _screenOn = true;
   _lastActivity = millis();
+  _activeBrightness = cfg::BRIGHTNESS;
   setCpuFrequencyMhz(cfg::CPU_FREQ_ACTIVE);
-  M5.Display.setBrightness(cfg::BRIGHTNESS);
+  M5.Display.setBrightness(_activeBrightness);
+}
+
+void PowerManager::setBrightness(uint8_t v) {
+  _activeBrightness = v;
+  if (_screenOn) M5.Display.setBrightness(v);
 }
 
 void PowerManager::update() {
-  if (_screenOn && (millis() - _lastActivity > cfg::INACTIVITY_MS)) {
+  if (_screenOn && (millis() - _lastActivity > _timeoutMs)) {
     sleepScreen();
   }
 }
@@ -24,7 +30,7 @@ void PowerManager::wake() {
   _screenOn = true;
   setCpuFrequencyMhz(cfg::CPU_FREQ_ACTIVE);   // volver a plena velocidad
   M5.Display.wakeup();
-  M5.Display.setBrightness(cfg::BRIGHTNESS);
+  M5.Display.setBrightness(_activeBrightness);
   notifyActivity();
 }
 

@@ -1,19 +1,18 @@
 #pragma once
 #include <cstdint>
 
-// Detector de pasos por picos sobre la magnitud del acelerómetro.
+// Detector de pasos con filtro de cadencia.
 //
-// Técnica: se suaviza la magnitud (|accel|) con un filtro exponencial, se
-// mantiene una envolvente adaptativa (máx/mín con decaimiento) para fijar un
-// umbral dinámico, y se cuenta un paso en cada flanco de subida que cruza el
-// umbral con histéresis, siempre que la señal tenga suficiente amplitud y haya
-// pasado un tiempo mínimo desde el último paso (periodo refractario).
+// 1) Detecta "candidatos": picos en la magnitud del acelerómetro (umbral dinámico
+//    con histéresis y amplitud mínima).
+// 2) Solo cuenta cuando los candidatos llegan en RITMO de caminar (intervalos entre
+//    MIN_INTERVAL y MAX_INTERVAL). Tras WARMUP candidatos rítmicos seguidos confirma
+//    la marcha y acredita también los de calentamiento; si se rompe el ritmo, reinicia.
+//    Esto descarta golpes sueltos/irregulares (teclear, gestos) que no son marcha.
 class StepDetector {
 public:
-  // Procesa una muestra. mag = magnitud de la aceleración en g (~1.0 en reposo).
-  // Devuelve el número de pasos detectados en esta muestra (0 ó 1).
+  // Procesa una muestra (mag = |accel| en g). Devuelve pasos acreditados (0, 1 o WARMUP).
   int process(float mag, uint32_t nowMs);
-
   void reset();
 
 private:
@@ -22,11 +21,14 @@ private:
   float    _vmax = 1.1f;
   float    _vmin = 0.9f;
   bool     _above = false;
-  uint32_t _lastStep = 0;
+  uint32_t _lastCand = 0;   // instante del último candidato
+  int      _run = 0;        // candidatos rítmicos consecutivos
 
-  static constexpr float    K          = 0.35f;  // suavizado (0..1)
-  static constexpr float    DECAY      = 0.004f; // relajación de la envolvente por muestra
-  static constexpr float    HYST       = 0.03f;  // histéresis alrededor del umbral (g)
-  static constexpr float    MIN_SPREAD = 0.10f;  // amplitud mínima pico-valle (g)
-  static constexpr uint32_t REFRACTORY = 260;    // ms mínimos entre pasos (~230 spm máx)
+  static constexpr float    K            = 0.25f;  // suavizado (menor = más filtrado)
+  static constexpr float    DECAY        = 0.004f; // relajación de la envolvente por muestra
+  static constexpr float    HYST         = 0.06f;  // histéresis alrededor del umbral (g)
+  static constexpr float    MIN_SPREAD   = 0.13f;  // amplitud mínima pico-valle (g) — bajar = capta pasos flojos
+  static constexpr uint32_t MIN_INTERVAL = 250;    // ms mínimos entre pasos (más rápido = ruido)
+  static constexpr uint32_t MAX_INTERVAL = 1300;   // ms máximos en ritmo (más lento = rompe marcha)
+  static constexpr int      WARMUP       = 2;      // candidatos rítmicos para confirmar marcha
 };

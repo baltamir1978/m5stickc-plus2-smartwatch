@@ -25,6 +25,7 @@ public:
   float    distanceMeters() const;
   int      calories() const;
   uint32_t activeMinutes() const  { return _activeMinutes; }
+  int      standHours() const     { return __builtin_popcount(_stoodMask); }  // horas del día con actividad
 
   // Devuelve true una sola vez cuando se supera el umbral de inactividad.
   bool consumeInactivityAlert();
@@ -40,6 +41,9 @@ private:
   int      _dayKey         = -1;   // aaaammdd del día en curso
   int      _lastMinOfDay   = -1;
   uint32_t _stepsThisMinute = 0;
+  int      _curHour        = -1;   // hora en curso (para horas de pie)
+  uint32_t _hourSteps      = 0;    // pasos en la hora en curso
+  uint32_t _stoodMask      = 0;    // bitmask de horas del día "de pie"
   uint32_t _lastStepMs     = 0;
   uint32_t _lastSavedSteps = 0;
   bool     _inactivityFired = false;

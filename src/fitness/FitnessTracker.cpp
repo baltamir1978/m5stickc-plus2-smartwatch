@@ -9,14 +9,21 @@ void FitnessTracker::begin(Settings* settings) {
   _dayKey        = _prefs.getInt("day", -1);
   _steps         = _prefs.getUInt("steps", 0);
   _activeMinutes = _prefs.getUInt("active", 0);
+  _stoodMask     = _prefs.getUInt("stood", 0);
   _lastSavedSteps = _steps;
 }
 
 void FitnessTracker::addSteps(uint32_t n) {
   _steps          += n;
   _stepsThisMinute += n;
+  _hourSteps      += n;
   _lastStepMs      = millis();
   _inactivityFired = false;  // al moverse, se rearma el aviso de inactividad
+
+  // Marcar la hora en curso como "de pie" al superar el umbral de pasos.
+  if (_curHour >= 0 && _hourSteps >= static_cast<uint32_t>(cfg::STAND_STEPS_HOUR)) {
+    _stoodMask |= (1u << _curHour);
+  }
 
   if (_steps - _lastSavedSteps >= 100) save(false);
 }
@@ -31,10 +38,20 @@ void FitnessTracker::update(const LocalTime& t) {
     _steps = 0;
     _activeMinutes = 0;
     _stepsThisMinute = 0;
+    _hourSteps = 0;
+    _stoodMask = 0;
     _lastSavedSteps = 0;
     _inactivityFired = false;
     _dayKey = today;
     save(true);
+  }
+
+  // Cambio de hora: reiniciar el contador de pasos de la hora (para horas de pie).
+  if (_curHour < 0) {
+    _curHour = t.hour;
+  } else if (t.hour != _curHour) {
+    _curHour = t.hour;
+    _hourSteps = 0;
   }
 
   // Cambio de minuto: consolidar el minuto anterior como activo o no.
@@ -82,5 +99,6 @@ void FitnessTracker::save(bool force) {
   _prefs.putInt("day", _dayKey);
   _prefs.putUInt("steps", _steps);
   _prefs.putUInt("active", _activeMinutes);
+  _prefs.putUInt("stood", _stoodMask);
   _lastSavedSteps = _steps;
 }

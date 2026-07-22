@@ -23,6 +23,10 @@ public:
   bool connected() const { return _connected; }
   void rejectCall();           // cuelga la llamada actual (BtnB)
 
+  // Modo ahorro: false = BLE apagado (sin advertising ni conexión). El loop lo
+  // enciende solo cuando toca sincronizar la hora.
+  void setActive(bool on) { _wantActive = on; }
+
   // Invocados por los callbacks del servidor (no llamar directamente).
   void handleConnect(NimBLEServer* server, NimBLEConnInfo& info);
   void handleDisconnect();
@@ -37,6 +41,7 @@ private:
   void discover();
   void requestTitle();
   void syncTimeFromCts();
+  void applyState();   // arranca/para el advertising según _wantActive
 
   TimeService* _time = nullptr;
   CallAlert*   _call = nullptr;
@@ -50,6 +55,8 @@ private:
 
   volatile bool _connected = false;
   volatile int  _state = IDLE;
+  bool          _wantActive = true;    // modo ahorro: false = BLE apagado
+  bool          _advertising = false;
   volatile bool _fetchTitle = false;
   volatile bool _callUidValid = false;
   volatile uint8_t _uid[4] = {0, 0, 0, 0};
