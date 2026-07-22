@@ -25,11 +25,13 @@ void setup() {
   auto m5cfg = M5.config();
   M5.begin(m5cfg);
 
-  M5.Display.setRotation(cfg::SCREEN_ROTATION);
+  Serial.begin(115200);
+  Serial.println("\n[BOOT] M5 Smartwatch iniciando...");
 
   power.begin();
   timeSvc.begin();
   settings.begin();
+  M5.Display.setRotation(settings.rotation());   // orientación elegida en Ajustes
   fitness.begin(&settings);
   motion.begin(&fitness);
 

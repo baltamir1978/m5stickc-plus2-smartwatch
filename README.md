@@ -64,13 +64,31 @@ Acciones de **BtnB** según la pantalla:
 
 ## Emparejar el iPhone
 
-1. Enciende el reloj (el BLE arranca solo).
-2. En el iPhone: **Ajustes → Bluetooth** → selecciona **"M5 Smartwatch"**.
-3. Acepta la solicitud de emparejamiento.
-4. A partir de ahí iOS entrega las **llamadas entrantes** y la **hora** automáticamente.
+El reloj usa **ANCS** (Apple Notification Center Service). iOS suele **no listar** los
+periféricos BLE "caseros" en *Ajustes → Bluetooth*, así que el emparejamiento se hace
+mejor desde una app de escaneo BLE que inicie la conexión y el *bonding*.
 
-> Si tras reflashear el firmware falla la reconexión, haz **"Olvidar este dispositivo"**
-> en Ajustes → Bluetooth y vuelve a emparejar.
+### Con LightBlue (recomendado)
+
+1. Instala **[LightBlue](https://apps.apple.com/app/lightblue/id557428110)** desde la App Store
+   (alternativa: **nRF Connect**).
+2. Enciende el reloj (el BLE arranca solo y empieza a anunciarse).
+3. Abre LightBlue → pestaña **Scan/Peripherals** → busca **"M5 Smartwatch"** en la lista.
+4. Pulsa **Connect**. Al conectar, el reloj solicita el emparejamiento cifrado (*bonding*)
+   y iOS mostrará el aviso de **"Solicitud de emparejamiento Bluetooth"** → **Emparejar**.
+5. Hecho: iOS ya entrega las **llamadas entrantes** y la **hora** al reloj automáticamente.
+   Puedes cerrar LightBlue; el vínculo queda guardado.
+
+> **Comprobación:** con el monitor serie abierto (`pio device monitor -b 115200`) verás
+> `[BLE] Advertising...`, luego `[BLE] iPhone conectado...` y `[BLE] ANCS listo` cuando
+> todo funciona.
+
+### Notas
+
+- Que **no aparezca en Ajustes → Bluetooth** es normal: no significa que esté roto.
+  Verifícalo siempre con LightBlue/nRF Connect.
+- Si tras reflashear el firmware falla la reconexión, haz **"Olvidar este dispositivo"**
+  en Ajustes → Bluetooth (si aparece) y vuelve a emparejar desde LightBlue.
 
 ## Compilar y flashear
 

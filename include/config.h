@@ -5,7 +5,7 @@
 namespace cfg {
 
 // --- Pantalla (se usa en horizontal: 240x135) ---
-constexpr uint8_t  SCREEN_ROTATION = 1;       // 1 o 3 => landscape
+constexpr uint8_t  SCREEN_ROTATION = 3;       // 1 o 3 => landscape (3 = girada 180°)
 constexpr uint8_t  BRIGHTNESS      = 90;      // 0-255
 constexpr uint32_t INACTIVITY_MS   = 15000;   // apagar pantalla tras 15 s sin actividad
 
@@ -47,9 +47,12 @@ constexpr uint16_t COL_BG      = 0x0000;  // negro
 constexpr uint16_t COL_TIME    = 0xFFFF;  // blanco
 constexpr uint16_t COL_DATE    = 0xAD55;  // gris claro
 constexpr uint16_t COL_ACCENT  = 0x07E0;  // verde
+constexpr uint16_t COL_CYAN    = 0x05FF;  // cian (hora)
+constexpr uint16_t COL_ORANGE  = 0xFD20;  // naranja (batería media)
 constexpr uint16_t COL_BAT_LOW = 0xF800;  // rojo
 constexpr uint16_t COL_DIM     = 0x52AA;  // gris oscuro
 
 constexpr int BATTERY_LOW_PCT = 20;       // umbral de batería baja
+constexpr int BATTERY_MID_PCT = 40;       // umbral de batería media (naranja)
 
 }  // namespace cfg

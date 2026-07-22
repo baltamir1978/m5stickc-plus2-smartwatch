@@ -18,7 +18,6 @@ private:
   void drawClean(M5Canvas& c);
   void drawMinimal(M5Canvas& c);
   void drawDashboard(M5Canvas& c);
-  void drawStatus(M5Canvas& c);   // BLE + batería (esquina superior derecha)
 
   Preferences _prefs;
   int         _style = CLEAN;

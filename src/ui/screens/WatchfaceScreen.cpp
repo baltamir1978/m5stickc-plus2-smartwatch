@@ -4,6 +4,63 @@
 #include <cstdio>
 #include <algorithm>
 
+// ---------- Iconos dibujados con primitivas ----------
+namespace {
+
+uint16_t batteryColor(int level, bool charging) {
+  if (charging) return cfg::COL_ACCENT;
+  if (level >= 0 && level <= cfg::BATTERY_LOW_PCT) return cfg::COL_BAT_LOW;
+  if (level >= 0 && level <= cfg::BATTERY_MID_PCT) return cfg::COL_ORANGE;
+  return cfg::COL_ACCENT;
+}
+
+// Batería con relleno proporcional + terminal; rayo si está cargando.
+void drawBattery(M5Canvas& c, int x, int y, int level, bool charging) {
+  const int w = 24, h = 12;
+  uint16_t col = batteryColor(level, charging);
+  c.drawRoundRect(x, y, w, h, 2, col);
+  c.fillRect(x + w, y + 3, 2, h - 6, col);         // terminal +
+  int lv = level < 0 ? 0 : (level > 100 ? 100 : level);
+  int fill = (w - 4) * lv / 100;
+  if (fill > 0) c.fillRect(x + 2, y + 2, fill, h - 4, col);
+  if (charging) {                                   // rayo (hueco sobre el relleno)
+    int bx = x + w / 2;
+    c.fillTriangle(bx + 1, y + 1, bx - 3, y + h / 2 + 1, bx + 1, y + h / 2, cfg::COL_BG);
+    c.fillTriangle(bx - 1, y + h - 1, bx + 3, y + h / 2 - 1, bx - 1, y + h / 2, cfg::COL_BG);
+  }
+}
+
+// Símbolo de Bluetooth (rune) con líneas.
+void drawBluetooth(M5Canvas& c, int x, int y, uint16_t col) {
+  const int H = 13;
+  int cx = x + 4, top = y, bot = y + H, mid = y + H / 2;
+  int q1 = y + H / 4, q3 = y + 3 * H / 4;
+  int rx = x + 7, lx = x + 1;
+  c.drawLine(cx, top, cx, bot, col);   // espina
+  c.drawLine(cx, top, rx, q1, col);
+  c.drawLine(rx, q1, lx, q3, col);
+  c.drawLine(lx, q1, rx, q3, col);
+  c.drawLine(rx, q3, cx, bot, col);
+}
+
+// Dos huellas de pie.
+void drawFootsteps(M5Canvas& c, int x, int y, uint16_t col) {
+  c.fillEllipse(x + 3, y + 4, 2, 4, col);
+  c.fillCircle(x + 3, y + 9, 2, col);
+  c.fillEllipse(x + 9, y + 6, 2, 4, col);
+  c.fillCircle(x + 9, y + 11, 2, col);
+}
+
+// Icono de calendario simple.
+void drawCalendar(M5Canvas& c, int x, int y, uint16_t col) {
+  c.drawRoundRect(x, y + 1, 13, 12, 2, col);
+  c.fillRect(x, y + 1, 13, 4, col);   // cabecera
+  c.drawLine(x + 3, y, x + 3, y + 2, col);
+  c.drawLine(x + 9, y, x + 9, y + 2, col);
+}
+
+}  // namespace
+
 WatchfaceScreen::WatchfaceScreen(AppContext* ctx) : Screen(ctx) {
   _prefs.begin("watchface", false);
   _style = _prefs.getInt("style", CLEAN);
@@ -24,67 +81,57 @@ void WatchfaceScreen::draw(M5Canvas& c) {
   }
 }
 
-// Batería (con color de carga/baja) + estado BLE, arriba a la derecha.
-void WatchfaceScreen::drawStatus(M5Canvas& c) {
-  const int W = c.width();
-  int bat = _ctx->power->batteryLevel();
-  bool charging = _ctx->power->isCharging();
-
-  uint16_t batColor = cfg::COL_DATE;
-  if (charging)                                       batColor = cfg::COL_ACCENT;
-  else if (bat >= 0 && bat <= cfg::BATTERY_LOW_PCT)   batColor = cfg::COL_BAT_LOW;
-
-  char batStr[10];
-  if (bat < 0) snprintf(batStr, sizeof(batStr), "--%%");
-  else         snprintf(batStr, sizeof(batStr), "%s%d%%", charging ? "+" : "", bat);
-
-  c.setFont(&fonts::Font2);
-  c.setTextDatum(top_right);
-  c.setTextColor(batColor);
-  c.drawString(batStr, W - 6, 6);
-  int batW = c.textWidth(batStr);
-
-  c.setTextColor(_ctx->bleConnected ? cfg::COL_ACCENT : cfg::COL_DIM);
-  c.drawString("BLE", W - 6 - batW - 8, 6);
-}
-
 void WatchfaceScreen::drawClean(M5Canvas& c) {
   const int W = c.width();
   const int H = c.height();
   c.fillScreen(cfg::COL_BG);
 
   LocalTime t = _ctx->time->now();
+  int  bat = _ctx->power->batteryLevel();
+  bool chg = _ctx->power->isCharging();
 
+  // --- Barra superior: fecha (izq, con icono) · BLE + batería (der, iconos) ---
+  drawCalendar(c, 6, 6, cfg::COL_CYAN);
   char fecha[16];
   snprintf(fecha, sizeof(fecha), "%s %02d %s",
            TimeService::weekdayShort(t.weekday), t.day, TimeService::monthShort(t.month));
   c.setFont(&fonts::Font2);
   c.setTextDatum(top_left);
   c.setTextColor(cfg::COL_DATE);
-  c.drawString(fecha, 6, 6);
+  c.drawString(fecha, 24, 4);
 
-  drawStatus(c);
+  drawBattery(c, W - 28, 5, bat, chg);
+  drawBluetooth(c, W - 44, 3, _ctx->bleConnected ? cfg::COL_CYAN : cfg::COL_DIM);
 
+  // --- Hora HH:MM (grande, cian) ---
   char hora[6];
   snprintf(hora, sizeof(hora), "%02d:%02d", t.hour, t.minute);
   c.setFont(&fonts::Font7);
   c.setTextDatum(middle_center);
-  c.setTextColor(cfg::COL_TIME);
-  c.drawString(hora, W / 2, H / 2 - 4);
+  c.setTextColor(cfg::COL_CYAN);
+  c.drawString(hora, W / 2, H / 2 - 2);
 
+  // --- Pie: huellas + pasos + % + barra de progreso ---
   uint32_t steps = _ctx->fitness ? _ctx->fitness->steps() : 0;
+  drawFootsteps(c, 6, H - 34, cfg::COL_ACCENT);
+  char pasosStr[12];
+  snprintf(pasosStr, sizeof(pasosStr), "%lu", static_cast<unsigned long>(steps));
   c.setFont(&fonts::Font2);
-  c.setTextColor(cfg::COL_DATE);
-  char pasosStr[24];
-  snprintf(pasosStr, sizeof(pasosStr), "%lu pasos", static_cast<unsigned long>(steps));
-  c.setTextDatum(bottom_left);
-  c.drawString(pasosStr, 8, H - 16);
+  c.setTextDatum(middle_left);
+  c.setTextColor(cfg::COL_TIME);
+  c.drawString(pasosStr, 24, H - 24);
 
-  const int barX = 8, barY = H - 12, barW = W - 16, barH = 8;
+  int pct = (_ctx->stepGoal > 0)
+                ? std::min(100, static_cast<int>(steps * 100 / _ctx->stepGoal)) : 0;
+  char pctStr[6];
+  snprintf(pctStr, sizeof(pctStr), "%d%%", pct);
+  c.setTextDatum(middle_right);
+  c.setTextColor(cfg::COL_ACCENT);
+  c.drawString(pctStr, W - 6, H - 24);
+
+  const int barX = 6, barY = H - 11, barW = W - 12, barH = 8;
   c.drawRoundRect(barX, barY, barW, barH, 3, cfg::COL_DIM);
-  float frac = (_ctx->stepGoal > 0)
-                   ? std::min(1.0f, static_cast<float>(steps) / _ctx->stepGoal) : 0.0f;
-  int fillW = static_cast<int>((barW - 2) * frac);
+  int fillW = (barW - 2) * pct / 100;
   if (fillW > 0) c.fillRoundRect(barX + 1, barY + 1, fillW, barH - 2, 2, cfg::COL_ACCENT);
 }
 
@@ -95,7 +142,6 @@ void WatchfaceScreen::drawMinimal(M5Canvas& c) {
 
   LocalTime t = _ctx->time->now();
 
-  // Fecha discreta arriba-derecha.
   char fecha[10];
   snprintf(fecha, sizeof(fecha), "%02d %s", t.day, TimeService::monthShort(t.month));
   c.setFont(&fonts::Font2);
@@ -103,7 +149,6 @@ void WatchfaceScreen::drawMinimal(M5Canvas& c) {
   c.setTextColor(cfg::COL_DIM);
   c.drawString(fecha, W - 4, 4);
 
-  // Hora enorme, centrada.
   char hora[6];
   snprintf(hora, sizeof(hora), "%02d:%02d", t.hour, t.minute);
   c.setFont(&fonts::Font7);
@@ -111,14 +156,8 @@ void WatchfaceScreen::drawMinimal(M5Canvas& c) {
   c.setTextColor(cfg::COL_TIME);
   c.drawString(hora, W / 2, H / 2);
 
-  // Batería tenue abajo-derecha.
   int bat = _ctx->power->batteryLevel();
-  char batStr[8];
-  snprintf(batStr, sizeof(batStr), "%d%%", bat < 0 ? 0 : bat);
-  c.setFont(&fonts::Font2);
-  c.setTextDatum(bottom_right);
-  c.setTextColor(cfg::COL_DIM);
-  c.drawString(batStr, W - 4, H - 2);
+  drawBattery(c, W - 28, H - 16, bat, _ctx->power->isCharging());
 }
 
 void WatchfaceScreen::drawDashboard(M5Canvas& c) {
@@ -128,12 +167,11 @@ void WatchfaceScreen::drawDashboard(M5Canvas& c) {
 
   LocalTime t = _ctx->time->now();
 
-  // Hora (media) a la izquierda, fecha a la derecha.
   char hora[6];
   snprintf(hora, sizeof(hora), "%02d:%02d", t.hour, t.minute);
   c.setFont(&fonts::Font4);
   c.setTextDatum(top_left);
-  c.setTextColor(cfg::COL_TIME);
+  c.setTextColor(cfg::COL_CYAN);
   c.drawString(hora, 6, 6);
 
   char fecha[16];
@@ -146,13 +184,13 @@ void WatchfaceScreen::drawDashboard(M5Canvas& c) {
 
   c.drawFastHLine(6, 38, W - 12, cfg::COL_DIM);
 
-  // Rejilla de métricas.
   uint32_t steps = _ctx->fitness ? _ctx->fitness->steps() : 0;
   float    km    = _ctx->fitness ? _ctx->fitness->distanceMeters() / 1000.0f : 0.0f;
   int      kcal  = _ctx->fitness ? _ctx->fitness->calories() : 0;
 
   const int cols[3] = {W / 6, W / 2, 5 * W / 6};
   const char* labels[3] = {"PASOS", "KM", "KCAL"};
+  const uint16_t vcol[3] = {cfg::COL_ACCENT, cfg::COL_CYAN, cfg::COL_ORANGE};
   char vals[3][12];
   snprintf(vals[0], sizeof(vals[0]), "%lu", static_cast<unsigned long>(steps));
   snprintf(vals[1], sizeof(vals[1]), "%.2f", km);
@@ -163,17 +201,11 @@ void WatchfaceScreen::drawDashboard(M5Canvas& c) {
     c.setFont(&fonts::Font2);
     c.setTextColor(cfg::COL_DIM);
     c.drawString(labels[i], cols[i], 56);
-    c.setTextColor(cfg::COL_TIME);
+    c.setTextColor(vcol[i]);
     c.drawString(vals[i], cols[i], 76);
   }
 
-  // Estado abajo.
   int bat = _ctx->power->batteryLevel();
-  char st[24];
-  snprintf(st, sizeof(st), "%s   BAT %d%%", _ctx->bleConnected ? "BLE ok" : "BLE --",
-           bat < 0 ? 0 : bat);
-  c.setFont(&fonts::Font2);
-  c.setTextColor(cfg::COL_DATE);
-  c.setTextDatum(bottom_center);
-  c.drawString(st, W / 2, H - 4);
+  drawBattery(c, W / 2 - 12, H - 16, bat, _ctx->power->isCharging());
+  drawBluetooth(c, 8, H - 17, _ctx->bleConnected ? cfg::COL_CYAN : cfg::COL_DIM);
 }

@@ -60,6 +60,7 @@ void BleService::begin(TimeService* time, CallAlert* call, const char* deviceNam
   adv->setScanResponseData(scanData);
   adv->enableScanResponse(true);
   adv->start();
+  Serial.printf("[BLE] Advertising como '%s'. Esperando al iPhone...\n", deviceName);
 }
 
 void BleService::handleConnect(NimBLEServer* server, NimBLEConnInfo& info) {
@@ -67,6 +68,7 @@ void BleService::handleConnect(NimBLEServer* server, NimBLEConnInfo& info) {
   _connected = true;
   _state = CONNECTED;
   _lastDiscoveryMs = 0;
+  Serial.println("[BLE] iPhone conectado. Descubriendo ANCS/CTS...");
 }
 
 void BleService::handleDisconnect() {
@@ -77,6 +79,7 @@ void BleService::handleDisconnect() {
   _callUidValid = false;
   _fetchTitle = false;
   if (_call) _call->clear();
+  Serial.println("[BLE] Desconectado.");
 }
 
 void BleService::update() {
@@ -126,6 +129,7 @@ void BleService::discover() {
   if (cts) _cts = cts->getCharacteristic(CTS_CHR);
 
   _state = READY;
+  Serial.println("[BLE] ANCS listo. Avisos de llamada activos.");
 }
 
 void BleService::onNotificationSource(const uint8_t* d, size_t len) {
@@ -139,6 +143,7 @@ void BleService::onNotificationSource(const uint8_t* d, size_t len) {
     _callUidValid = true;
     _call->incoming(nullptr);   // nombre genérico hasta obtener el Title
     _fetchTitle = true;         // el write al Control Point lo hace update()
+    Serial.println("[BLE] Llamada entrante!");
   } else if (eventID == EVENT_REMOVED) {
     _call->clear();
     _callUidValid = false;

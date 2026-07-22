@@ -25,6 +25,11 @@ void SettingsScreen::onButtonB() {
       s->setWeight(w);
       break;
     }
+    case FLIP: {
+      s->toggleRotation();
+      M5.Display.setRotation(s->rotation());   // aplicar el giro al instante
+      break;
+    }
   }
 }
 
@@ -49,8 +54,10 @@ void SettingsScreen::draw(M5Canvas& c) {
            static_cast<unsigned long>(s ? s->stepGoal() : 0));
   snprintf(rows[HEIGHT], sizeof(rows[0]), "Altura    %d cm", s ? s->height() : 0);
   snprintf(rows[WEIGHT], sizeof(rows[0]), "Peso      %d kg", s ? s->weight() : 0);
+  snprintf(rows[FLIP], sizeof(rows[0]), "Pantalla  %s",
+           (s && s->rotation() == 1) ? "volteada" : "normal");
 
-  const int y0 = 30, dy = 24;
+  const int y0 = 26, dy = 22;
   for (int i = 0; i < FIELD_COUNT; i++) {
     bool sel = (i == _field);
     int y = y0 + i * dy;

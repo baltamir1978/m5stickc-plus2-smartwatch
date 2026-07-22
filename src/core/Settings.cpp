@@ -6,6 +6,12 @@ void Settings::begin() {
   _height = _prefs.getInt("height", static_cast<int>(cfg::USER_HEIGHT_CM));
   _weight = _prefs.getInt("weight", static_cast<int>(cfg::USER_WEIGHT_KG));
   _goal   = _prefs.getUInt("goal", cfg::STEP_GOAL_DEFAULT);
+  _rotation = _prefs.getUChar("rot", cfg::SCREEN_ROTATION);
+}
+
+void Settings::toggleRotation() {
+  _rotation = (_rotation == 1) ? 3 : 1;
+  _prefs.putUChar("rot", _rotation);
 }
 
 void Settings::setHeight(int cm) {
