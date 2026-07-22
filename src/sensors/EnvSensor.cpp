@@ -16,26 +16,33 @@ void EnvSensor::begin() {
   };
 
   for (const auto& p : cands) {
-    Wire.end();
-    Wire.begin(p.sda, p.scl);
-    delay(5);
-    Wire.beginTransmission(0x44);
-    if (Wire.endTransmission() == 0) {
-      _sht.begin(&Wire, 0x44, p.sda, p.scl, 400000);
-      _qmp.begin(&Wire, 0x70, p.sda, p.scl, 400000);
-      _present = true;
-      _source = p.name;
-      Serial.printf("[ENV] ENV III detectado en %s\n", p.name);
-      return;
+    for (int intento = 0; intento < 3; intento++) {
+      Wire.end();
+      Wire.begin(p.sda, p.scl);
+      Wire.setClock(100000);   // arranque a 100 kHz (más tolerante)
+      delay(30);               // tiempo de asentamiento del sensor
+      Wire.beginTransmission(0x44);
+      uint8_t err = Wire.endTransmission();
+      Serial.printf("[ENV] probando %s (intento %d): %s\n", p.name, intento + 1,
+                    err == 0 ? "OK" : "sin respuesta");
+      if (err == 0) {
+        _sht.begin(&Wire, 0x44, p.sda, p.scl, 400000);
+        _qmp.begin(&Wire, 0x70, p.sda, p.scl, 400000);
+        _present = true;
+        _source = p.name;
+        Serial.printf("[ENV] ENV III detectado en %s\n", p.name);
+        return;
+      }
+      delay(20);
     }
   }
 
   _present = false;
-  Serial.println("[ENV] ENV III no detectado.");
+  Serial.println("[ENV] ENV III no detectado (revisa la conexion del Hat).");
 }
 
 void EnvSensor::update() {
-  if (!_present) return;
+  if (!_present || !_reading) return;   // solo lee con la pantalla ENV abierta
   if (millis() - _lastRead < 2000) return;
   _lastRead = millis();
 

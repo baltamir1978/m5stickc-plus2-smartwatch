@@ -9,10 +9,13 @@ public:
   virtual ~Screen() = default;
 
   virtual void onEnter() {}
+  virtual void onExit() {}
   virtual void draw(M5Canvas& canvas) = 0;
   virtual void onButtonA() {}      // BtnA: ciclar / acción primaria
   virtual void onButtonB() {}      // BtnB (clic): acción secundaria
   virtual void onButtonBHold() {}  // BtnB (mantener): acción terciaria
+  virtual bool fullBrightness() const { return false; }  // p.ej. linterna
+  virtual bool wantsTick() const { return false; }        // refresco continuo (p.ej. cronómetro)
 
 protected:
   AppContext* _ctx;

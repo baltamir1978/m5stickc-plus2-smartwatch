@@ -27,6 +27,7 @@ void SettingsScreen::onButtonB() {
     }
     case SEX:     s->toggleSex();          break;
     case AGE:     s->cycleAge();           break;
+    case HOURFMT: s->toggleHour24();       break;
     case TIMEOUT: s->cycleScreenTimeout(); break;
     case FLIP:
       s->toggleFlip();
@@ -34,6 +35,9 @@ void SettingsScreen::onButtonB() {
       break;
     case DAY:   s->cycleDayHour();   break;
     case NIGHT: s->cycleNightHour(); break;
+    case ALARM:   s->toggleAlarm();     break;
+    case ALARM_H: s->cycleAlarmHour();  break;
+    case ALARM_M: s->cycleAlarmMin();   break;
     case BLE:   s->toggleBleSaver(); break;
   }
 }
@@ -62,11 +66,15 @@ void SettingsScreen::draw(M5Canvas& c) {
   snprintf(rows[SEX],     sizeof(rows[0]), "Sexo     %s",
            (s && s->sex() == Settings::FEMALE) ? "mujer" : "hombre");
   snprintf(rows[AGE],     sizeof(rows[0]), "Edad     %d", s ? s->age() : 0);
+  snprintf(rows[HOURFMT], sizeof(rows[0]), "Hora     %s", (s && !s->hour24()) ? "12h" : "24h");
   snprintf(rows[TIMEOUT], sizeof(rows[0]), "Apagar   %d s", s ? s->screenSecs() : 0);
   snprintf(rows[FLIP],    sizeof(rows[0]), "Pantalla %s",
            (s && s->flipped()) ? "volteada" : "normal");
   snprintf(rows[DAY],     sizeof(rows[0]), "Dia      %dh", s ? s->dayHour() : 0);
   snprintf(rows[NIGHT],   sizeof(rows[0]), "Noche    %dh", s ? s->nightHour() : 0);
+  snprintf(rows[ALARM],   sizeof(rows[0]), "Alarma   %s", (s && s->alarmOn()) ? "on" : "off");
+  snprintf(rows[ALARM_H], sizeof(rows[0]), "Alarma h %d", s ? s->alarmHour() : 0);
+  snprintf(rows[ALARM_M], sizeof(rows[0]), "Alarma m %02d", s ? s->alarmMin() : 0);
   snprintf(rows[BLE],     sizeof(rows[0]), "BLE      %s",
            (s && s->bleSaver()) ? "ahorro" : "siempre");
 

@@ -4,7 +4,10 @@
 #include "screens/UtilitiesScreen.h"
 #include "screens/SettingsScreen.h"
 #include "screens/EnvScreen.h"
+#include "screens/FlashlightScreen.h"
+#include "screens/CronoScreen.h"
 #include "sensors/EnvSensor.h"
+#include "Icons.h"
 #include "config.h"
 #include <cstdio>
 
@@ -20,6 +23,8 @@ void UiManager::begin(AppContext* ctx) {
   // Pantalla del sensor ENV III: solo si está conectado al arrancar.
   if (ctx->env && ctx->env->present()) _screens.push_back(new EnvScreen(ctx));
   _screens.push_back(new UtilitiesScreen(ctx));
+  _screens.push_back(new CronoScreen(ctx));
+  _screens.push_back(new FlashlightScreen(ctx));
   _screens.push_back(new SettingsScreen(ctx));
   _current = 0;
   _screens[_current]->onEnter();
@@ -27,6 +32,16 @@ void UiManager::begin(AppContext* ctx) {
 
 void UiManager::update() {
   if (!_ctx->power->screenOn()) return;
+
+  // Pantallas con refresco continuo (p.ej. cronómetro): redibujar a ~10 Hz.
+  if (_screens[_current]->wantsTick()) {
+    if (millis() - _lastTick > 100) {
+      _lastTick = millis();
+      render();
+    }
+    return;
+  }
+
   // La hora refresca una vez por minuto; los pasos, en cuanto cambian, para que
   // la watchface y la pantalla de fitness se vean vivas al caminar.
   int minute = _ctx->time->now().minute;
@@ -49,6 +64,7 @@ void UiManager::render() {
 }
 
 void UiManager::nextScreen() {
+  _screens[_current]->onExit();
   _current = (_current + 1) % _screens.size();
   _screens[_current]->onEnter();
   forceRedraw();
@@ -120,6 +136,29 @@ void UiManager::drawIrProgress(const char* brand, int idx, int total) {
   _canvas.drawRoundRect(barX, barY, barW, barH, 3, cfg::COL_DIM);
   int fillW = (total > 0) ? (barW - 2) * idx / total : 0;
   if (fillW > 0) _canvas.fillRoundRect(barX + 1, barY + 1, fillW, barH - 2, 2, cfg::COL_ACCENT);
+
+  _canvas.pushSprite(0, 0);
+}
+
+void UiManager::drawAlarmOverlay(const char* timeStr, bool blink) {
+  const int W = _canvas.width();
+  const int H = _canvas.height();
+  _canvas.fillScreen(blink ? cfg::COL_ORANGE : cfg::COL_BG);
+
+  icons::bell(_canvas, W / 2, 24, cfg::COL_TIME);
+
+  _canvas.setFont(&fonts::Font2);
+  _canvas.setTextColor(cfg::COL_TIME);
+  _canvas.setTextDatum(top_center);
+  _canvas.drawString("ALARMA", W / 2, 42);
+
+  _canvas.setFont(&fonts::Font7);
+  _canvas.setTextDatum(middle_center);
+  _canvas.drawString(timeStr, W / 2, H / 2 + 20);
+
+  _canvas.setFont(&fonts::Font2);
+  _canvas.setTextDatum(bottom_center);
+  _canvas.drawString("BtnB: parar", W / 2, H - 4);
 
   _canvas.pushSprite(0, 0);
 }

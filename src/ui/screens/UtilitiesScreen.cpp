@@ -1,4 +1,5 @@
 #include "UtilitiesScreen.h"
+#include "../Icons.h"
 #include "config.h"
 
 void UtilitiesScreen::draw(M5Canvas& c) {
@@ -6,17 +7,17 @@ void UtilitiesScreen::draw(M5Canvas& c) {
   const int H = c.height();
   c.fillScreen(cfg::COL_BG);
 
-  c.setFont(&fonts::Font4);
-  c.setTextDatum(middle_center);
-  c.setTextColor(cfg::COL_ACCENT);
-  c.drawString("TV-B-Gone", W / 2, 34);
-
   c.setFont(&fonts::Font2);
-  c.setTextColor(cfg::COL_DATE);
-  c.drawString("Apaga cualquier TV", W / 2, H / 2 + 6);
+  c.setTextDatum(top_left);
+  c.setTextColor(cfg::COL_ACCENT);
+  c.drawString("TV-B-Gone", 6, 4);
+
+  // Icono: tele con antenas (verde) y aspa roja delante.
+  icons::tv(c, W / 2, H / 2);
 
   c.setTextColor(cfg::COL_TIME);
-  c.drawString("BtnB: emitir IR", W / 2, H - 16);
+  c.setTextDatum(bottom_center);
+  c.drawString("BtnB: emitir", W / 2, H - 4);
 }
 
 void UtilitiesScreen::onButtonB() {

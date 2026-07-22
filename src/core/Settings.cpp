@@ -13,6 +13,30 @@ void Settings::begin() {
   _dayHour = _prefs.getInt("dayh", cfg::DAY_START_HOUR);
   _nightHour = _prefs.getInt("nighth", cfg::NIGHT_START_HOUR);
   _bleSaver = _prefs.getBool("blesv", false);
+  _alarmOn   = _prefs.getBool("almon", false);
+  _alarmHour = _prefs.getInt("almh", 7);
+  _alarmMin  = _prefs.getInt("almm", 0);
+  _hour24    = _prefs.getBool("h24", true);
+}
+
+void Settings::toggleHour24() {
+  _hour24 = !_hour24;
+  _prefs.putBool("h24", _hour24);
+}
+
+void Settings::toggleAlarm() {
+  _alarmOn = !_alarmOn;
+  _prefs.putBool("almon", _alarmOn);
+}
+
+void Settings::cycleAlarmHour() {
+  _alarmHour = (_alarmHour + 1) % 24;
+  _prefs.putInt("almh", _alarmHour);
+}
+
+void Settings::cycleAlarmMin() {
+  _alarmMin = (_alarmMin + 5) % 60;
+  _prefs.putInt("almm", _alarmMin);
 }
 
 void Settings::toggleBleSaver() {

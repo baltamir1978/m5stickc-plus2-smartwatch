@@ -1,4 +1,5 @@
 #include <M5Unified.h>
+#include <cstdio>
 #include "config.h"
 #include "core/PowerManager.h"
 #include "core/TimeService.h"
@@ -29,6 +30,8 @@ void setup() {
 
   Serial.begin(115200);
   Serial.println("\n[BOOT] M5 Smartwatch iniciando...");
+
+  M5.Speaker.setVolume(255);   // volumen máximo para alarmas / alertas de llamada
 
   power.begin();
   timeSvc.begin();
@@ -87,6 +90,42 @@ static bool handleCall() {
   return true;
 }
 
+// Gestiona la alarma: suena a la hora fijada; se para con BtnB (o sola a los 60 s).
+// Devuelve true mientras está sonando.
+static bool handleAlarm(const LocalTime& t) {
+  static bool     ringing = false;
+  static uint32_t startMs = 0;
+  static int      firedKey = -1;
+  static uint32_t lastBeep = 0, lastDraw = 0;
+  static bool     blink = false;
+
+  const int nowKey = t.hour * 60 + t.minute;
+  const int almKey = settings.alarmHour() * 60 + settings.alarmMin();
+
+  if (settings.alarmOn() && nowKey == almKey) {
+    if (firedKey != nowKey && !ringing) { ringing = true; startMs = millis(); firedKey = nowKey; }
+  } else if (nowKey != almKey) {
+    firedKey = -1;   // rearmar para el próximo día
+  }
+
+  if (!ringing) return false;
+
+  if (!power.screenOn()) power.wake();
+  power.notifyActivity();
+
+  if (millis() - lastBeep > 800) { lastBeep = millis(); M5.Speaker.tone(3000, 350); }
+  if (millis() - lastDraw > 500) {
+    lastDraw = millis();
+    blink = !blink;
+    char ts[6];
+    snprintf(ts, sizeof(ts), "%02d:%02d", settings.alarmHour(), settings.alarmMin());
+    ui.drawAlarmOverlay(ts, blink);
+  }
+  if (M5.BtnB.wasPressed() || M5.BtnA.wasPressed()) ringing = false;
+  if (millis() - startMs > 60000) ringing = false;
+  return true;
+}
+
 void loop() {
   M5.update();
   power.update();
@@ -101,9 +140,13 @@ void loop() {
   power.setInactivityMs(settings.screenTimeoutMs());
   motion.setFlipped(settings.flipped());
 
-  // Brillo automático día/noche según la hora y las horas configuradas.
-  bool day = (t.hour >= settings.dayHour() && t.hour < settings.nightHour());
-  power.setBrightness(day ? cfg::BRIGHTNESS_DAY : cfg::BRIGHTNESS_NIGHT);
+  // Brillo: máximo en la linterna; si no, automático día/noche.
+  if (ui.currentFullBright()) {
+    power.setBrightness(255);
+  } else {
+    bool day = (t.hour >= settings.dayHour() && t.hour < settings.nightHour());
+    power.setBrightness(day ? cfg::BRIGHTNESS_DAY : cfg::BRIGHTNESS_NIGHT);
+  }
 
   // BLE: en modo ahorro se apaga salvo cuando toca sincronizar la hora (1x/día).
   bool bleWanted = !settings.bleSaver() || timeSvc.needsSync();
@@ -116,6 +159,12 @@ void loop() {
   bool nowCall = handleCall();
   if (nowCall) { wasCall = true; delay(20); return; }
   if (wasCall) { wasCall = false; ui.forceRedraw(); }  // al colgar, restaurar pantalla
+
+  // Alarma (prioridad tras la llamada).
+  static bool wasAlarm = false;
+  bool nowAlarm = handleAlarm(t);
+  if (nowAlarm) { wasAlarm = true; delay(20); return; }
+  if (wasAlarm) { wasAlarm = false; ui.forceRedraw(); }
 
   // Aviso de inactividad: doble pitido.
   if (fitness.consumeInactivityAlert()) {

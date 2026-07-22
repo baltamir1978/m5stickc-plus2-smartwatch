@@ -24,6 +24,10 @@ esferas, contapasos y métricas de actividad, gesto de levantar la muñeca, avis
   minutos activos, **horas de pie** y aviso de inactividad. Reinicio diario a medianoche;
   los datos del día sobreviven a reinicios.
 - **Wrist-raise** — girar la muñeca (giroscopio) enciende la pantalla; respeta el volteo.
+- **Linterna** — pantalla en blanco a máximo brillo.
+- **Cronómetro** — iniciar/pausar (BtnB) y poner a cero (mantener BtnB).
+- **Alarma** — hora configurable en Ajustes; suena con aviso a pantalla completa y
+  muestra una campana amarilla junto al Bluetooth en las esferas cuando está activa.
 - **Llamadas entrantes (iPhone / ANCS)** — overlay a pantalla completa con icono de
   teléfono, nombre grande de quien llama, pitido y opción de **colgar** desde el reloj.
 - **Hora automática (iPhone / CTS)** — sincroniza el RTC al conectar y cada día a las 04:00.
@@ -32,9 +36,13 @@ esferas, contapasos y métricas de actividad, gesto de levantar la muñeca, avis
   media secuencia pulsando BtnB de nuevo.
 - **Brillo automático día/noche** con horas configurables.
 - **Ajustes** editables desde el reloj (con scroll): objetivo de pasos, altura, peso,
-  **sexo**, **edad**, tiempo de pantalla, volteo, horas día/noche y **modo BLE ahorro**.
+  **sexo**, **edad**, **formato 12/24 h**, tiempo de pantalla, volteo, horas día/noche,
+  **alarma** y **modo BLE ahorro**.
 - **Modo BLE ahorro** — apaga el BLE casi todo el tiempo (sin llamadas) y solo lo
   enciende una vez al día para sincronizar la hora.
+- **Iconos por métrica** en toda la interfaz (huellas, pin, llama, cronómetro, persona,
+  termómetro, gota, manómetro) del color de cada dato; el TV-B-Gone se muestra como una
+  tele con aspa roja.
 - **Sensor ambiental ENV III** (opcional) — si se detecta al arrancar (Hat G0/G26 o
   Grove G32/G33), añade una pantalla con **temperatura, humedad y presión**, indicando
   el puerto por el que se conectó.

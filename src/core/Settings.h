@@ -22,6 +22,10 @@ public:
   int      dayHour()   const { return _dayHour; }          // hora de inicio del brillo de día
   int      nightHour() const { return _nightHour; }        // hora de inicio del brillo de noche
   bool     bleSaver()  const { return _bleSaver; }         // BLE apagado salvo sync diario
+  bool     alarmOn()   const { return _alarmOn; }
+  int      alarmHour() const { return _alarmHour; }
+  int      alarmMin()  const { return _alarmMin; }
+  bool     hour24()    const { return _hour24; }
 
   void setHeight(int cm);
   void setWeight(int kg);
@@ -33,6 +37,10 @@ public:
   void cycleDayHour();          // +1 h (0..23) y persiste
   void cycleNightHour();        // +1 h (0..23) y persiste
   void toggleBleSaver();        // BLE ahorro <-> siempre y persiste
+  void toggleAlarm();           // alarma on/off y persiste
+  void cycleAlarmHour();        // +1 h (0..23) y persiste
+  void cycleAlarmMin();         // +5 min (0..55) y persiste
+  void toggleHour24();          // 24h <-> 12h y persiste
 
   // Rangos y pasos de edición.
   static constexpr int      HEIGHT_MIN = 120, HEIGHT_MAX = 220;
@@ -52,4 +60,8 @@ private:
   int      _dayHour    = 8;
   int      _nightHour  = 21;
   bool     _bleSaver   = false;
+  bool     _alarmOn    = false;
+  int      _alarmHour  = 7;
+  int      _alarmMin   = 0;
+  bool     _hour24     = true;
 };

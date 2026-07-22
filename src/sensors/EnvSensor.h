@@ -8,7 +8,8 @@ class EnvSensor {
 public:
   void begin();                 // sondea el bus Grove
   bool present() const { return _present; }
-  void update();                // lee los sensores (limitado a ~1 vez cada 2 s)
+  void update();                // lee los sensores (~1 vez cada 2 s) solo si reading()
+  void setReading(bool on) { _reading = on; if (on) _lastRead = 0; }  // activo solo con la pantalla abierta
 
   float temperature() const { return _t; }  // °C
   float humidity()    const { return _h; }  // %
@@ -19,6 +20,7 @@ private:
   SHT3X    _sht;
   QMP6988  _qmp;
   bool     _present = false;
+  bool     _reading = false;
   const char* _source = "";
   float    _t = 0, _h = 0, _p = 0;
   uint32_t _lastRead = 0;

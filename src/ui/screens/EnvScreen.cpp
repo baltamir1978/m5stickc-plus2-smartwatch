@@ -28,6 +28,14 @@ void iconGauge(M5Canvas& c, int cx, int cy, uint16_t col) {
 
 }  // namespace
 
+void EnvScreen::onEnter() {
+  if (_ctx->env) _ctx->env->setReading(true);
+}
+
+void EnvScreen::onExit() {
+  if (_ctx->env) _ctx->env->setReading(false);
+}
+
 void EnvScreen::draw(M5Canvas& c) {
   const int W = c.width();
   c.fillScreen(cfg::COL_BG);

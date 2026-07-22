@@ -18,6 +18,7 @@ private:
   void drawClean(M5Canvas& c);
   void drawMinimal(M5Canvas& c);
   void drawDashboard(M5Canvas& c);
+  int  dispHour(int h24) const;   // convierte a 12h si el ajuste lo pide
 
   Preferences _prefs;
   int         _style = CLEAN;

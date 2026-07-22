@@ -7,4 +7,6 @@ class EnvScreen : public Screen {
 public:
   explicit EnvScreen(AppContext* ctx) : Screen(ctx) {}
   void draw(M5Canvas& canvas) override;
+  void onEnter() override;
+  void onExit() override;
 };

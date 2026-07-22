@@ -1,5 +1,6 @@
 #include "WatchfaceScreen.h"
 #include "fitness/FitnessTracker.h"
+#include "../Icons.h"
 #include "config.h"
 #include <cstdio>
 #include <algorithm>
@@ -59,40 +60,6 @@ void drawRings(M5Canvas& c, int cx, int cy, float calF, float stepF, float stand
   drawRing(c, cx, cy, 11, 17, standF, cfg::COL_RING_STAND);
 }
 
-// --- Iconos de métricas (centrados en cx,cy, ~16px) ---
-
-void icoSteps(M5Canvas& c, int cx, int cy, uint16_t col) {   // huellas
-  c.fillEllipse(cx - 3, cy - 2, 2, 4, col);
-  c.fillCircle(cx - 3, cy + 3, 2, col);
-  c.fillEllipse(cx + 3, cy, 2, 4, col);
-  c.fillCircle(cx + 3, cy + 5, 2, col);
-}
-
-void icoPin(M5Canvas& c, int cx, int cy, uint16_t col) {     // marcador (distancia)
-  c.fillCircle(cx, cy - 3, 6, col);
-  c.fillTriangle(cx - 5, cy, cx + 5, cy, cx, cy + 8, col);
-  c.fillCircle(cx, cy - 3, 2, cfg::COL_BG);                  // agujero
-}
-
-void icoFlame(M5Canvas& c, int cx, int cy, uint16_t col) {   // llama (calorías)
-  c.fillTriangle(cx, cy - 9, cx - 5, cy + 3, cx + 5, cy + 3, col);
-  c.fillCircle(cx, cy + 3, 5, col);
-  c.fillCircle(cx, cy + 4, 2, cfg::COL_BG);                  // hueco interior
-}
-
-void icoStopwatch(M5Canvas& c, int cx, int cy, uint16_t col) {  // cronómetro (activo)
-  c.drawCircle(cx, cy + 1, 7, col);
-  c.drawCircle(cx, cy + 1, 6, col);
-  c.fillRect(cx - 2, cy - 9, 4, 3, col);                     // botón
-  c.drawLine(cx, cy + 1, cx + 3, cy - 3, col);               // aguja
-}
-
-void icoPerson(M5Canvas& c, int cx, int cy, uint16_t col) {  // persona (de pie)
-  c.fillCircle(cx, cy - 6, 3, col);                          // cabeza
-  c.fillRoundRect(cx - 2, cy - 2, 4, 9, 2, col);             // cuerpo
-  c.drawFastHLine(cx - 4, cy + 8, 9, col);                   // suelo
-}
-
 }  // namespace
 
 WatchfaceScreen::WatchfaceScreen(AppContext* ctx) : Screen(ctx) {
@@ -104,6 +71,14 @@ WatchfaceScreen::WatchfaceScreen(AppContext* ctx) : Screen(ctx) {
 void WatchfaceScreen::onButtonB() {
   _style = (_style + 1) % STYLE_COUNT;
   _prefs.putInt("style", _style);
+}
+
+int WatchfaceScreen::dispHour(int h24) const {
+  if (_ctx->settings && !_ctx->settings->hour24()) {
+    int h = h24 % 12;
+    return h == 0 ? 12 : h;
+  }
+  return h24;
 }
 
 void WatchfaceScreen::draw(M5Canvas& c) {
@@ -133,35 +108,49 @@ void WatchfaceScreen::drawClean(M5Canvas& c) {
   c.setTextColor(cfg::COL_DATE);
   c.drawString(fecha, 6, 2);
 
-  // --- Batería (con rayo) + BLE, arriba-derecha ---
+  // --- Batería (con rayo) + BLE + campana de alarma, arriba-derecha ---
   drawBattery(c, W - 28, 4, bat, chg);
   drawBluetooth(c, W - 44, 3, _ctx->bleConnected ? cfg::COL_CYAN : cfg::COL_DIM);
+  if (_ctx->settings && _ctx->settings->alarmOn())
+    icons::bellSmall(c, W - 56, 9, cfg::COL_BOLT);
 
-  // --- Hora HH:MM (izquierda, cian) ---
+  // --- Hora HH:MM (alineada a la izquierda, cian, un poco más grande) ---
   char hora[6];
-  snprintf(hora, sizeof(hora), "%02d:%02d", t.hour, t.minute);
+  snprintf(hora, sizeof(hora), "%02d:%02d", dispHour(t.hour), t.minute);
   c.setFont(&fonts::Font7);
-  c.setTextDatum(middle_center);
+  c.setTextSize(1.1f);
+  c.setTextDatum(middle_left);
   c.setTextColor(cfg::COL_CYAN);
-  c.drawString(hora, 78, 62);
+  c.drawString(hora, 6, 66);
+  c.setTextSize(1.0f);
 
-  // --- 3 anillos de actividad (derecha) ---
+  // --- 3 anillos de actividad (derecha, un par de px a la izquierda) ---
   uint32_t steps = _ctx->fitness ? _ctx->fitness->steps() : 0;
   int      kcal  = _ctx->fitness ? _ctx->fitness->activeCalories() : 0;  // anillo Move = activas
   int      stand = _ctx->fitness ? _ctx->fitness->standHours() : 0;
   float calF   = (cfg::CALORIE_GOAL > 0) ? static_cast<float>(kcal) / cfg::CALORIE_GOAL : 0;
   float stepF  = (_ctx->stepGoal > 0)    ? static_cast<float>(steps) / _ctx->stepGoal : 0;
   float standF = (cfg::STAND_GOAL > 0)   ? static_cast<float>(stand) / cfg::STAND_GOAL : 0;
-  drawRings(c, 198, 62, calF, stepF, standF);
+  drawRings(c, 196, 62, calF, stepF, standF);
 
-  // --- Distancia (abajo) ---
+  // --- Abajo: distancia · pasos · calorías (cifras) ---
   float km = _ctx->fitness ? _ctx->fitness->distanceMeters() / 1000.0f : 0.0f;
-  char dist[16];
-  snprintf(dist, sizeof(dist), "%.2f km", km);
-  c.setFont(&fonts::Font4);
+  int   kcalTotal = _ctx->fitness ? _ctx->fitness->calories() : 0;
+  char dist[12], stepStr[10], kcalStr[10];
+  snprintf(dist, sizeof(dist), "%.1f km", km);
+  snprintf(stepStr, sizeof(stepStr), "%lu", static_cast<unsigned long>(steps));
+  snprintf(kcalStr, sizeof(kcalStr), "%d kcal", kcalTotal);
+
+  c.setFont(&fonts::Font2);
   c.setTextDatum(bottom_left);
   c.setTextColor(cfg::COL_TIME);
   c.drawString(dist, 6, H - 1);
+  c.setTextDatum(bottom_center);
+  c.setTextColor(cfg::COL_RING_STEP);
+  c.drawString(stepStr, W / 2, H - 1);
+  c.setTextDatum(bottom_right);
+  c.setTextColor(cfg::COL_RING_MOVE);
+  c.drawString(kcalStr, W - 6, H - 1);
 }
 
 void WatchfaceScreen::drawMinimal(M5Canvas& c) {
@@ -179,13 +168,15 @@ void WatchfaceScreen::drawMinimal(M5Canvas& c) {
   c.setTextColor(cfg::COL_TIME);
   c.drawString(fecha, 6, 4);
 
-  // Batería + BLE arriba-derecha (igual que en las otras esferas).
+  // Batería + BLE + campana de alarma arriba-derecha (igual que en las otras esferas).
   drawBattery(c, W - 28, 4, _ctx->power->batteryLevel(), _ctx->power->isCharging());
   drawBluetooth(c, W - 44, 3, _ctx->bleConnected ? cfg::COL_CYAN : cfg::COL_DIM);
+  if (_ctx->settings && _ctx->settings->alarmOn())
+    icons::bellSmall(c, W - 56, 9, cfg::COL_BOLT);
 
   // Hora ENORME (fuente 7 segmentos escalada).
   char hora[6];
-  snprintf(hora, sizeof(hora), "%02d:%02d", t.hour, t.minute);
+  snprintf(hora, sizeof(hora), "%02d:%02d", dispHour(t.hour), t.minute);
   c.setFont(&fonts::Font7);
   c.setTextSize(1.6f);
   c.setTextDatum(middle_center);
@@ -201,16 +192,26 @@ void WatchfaceScreen::drawDashboard(M5Canvas& c) {
 
   LocalTime t = _ctx->time->now();
 
-  // --- Cabecera: hora (izq) + batería/BLE (der, como en la esfera principal) ---
+  // --- Cabecera: hora + fecha (izq) + batería/BLE (der) ---
   char hora[6];
-  snprintf(hora, sizeof(hora), "%02d:%02d", t.hour, t.minute);
+  snprintf(hora, sizeof(hora), "%02d:%02d", dispHour(t.hour), t.minute);
   c.setFont(&fonts::Font4);
   c.setTextDatum(top_left);
   c.setTextColor(cfg::COL_CYAN);
   c.drawString(hora, 6, 3);
+  int hw = c.textWidth(hora);
+
+  char fecha[12];
+  snprintf(fecha, sizeof(fecha), "%02d/%02d/%02d", t.day, t.month, t.year % 100);
+  c.setFont(&fonts::Font2);
+  c.setTextDatum(bottom_left);
+  c.setTextColor(cfg::COL_DATE);
+  c.drawString(fecha, 12 + hw, 24);
 
   drawBattery(c, W - 28, 4, _ctx->power->batteryLevel(), _ctx->power->isCharging());
   drawBluetooth(c, W - 44, 3, _ctx->bleConnected ? cfg::COL_CYAN : cfg::COL_DIM);
+  if (_ctx->settings && _ctx->settings->alarmOn())
+    icons::bellSmall(c, W - 56, 9, cfg::COL_BOLT);
 
   c.drawFastHLine(6, 26, W - 12, cfg::COL_DIM);
 
@@ -240,11 +241,11 @@ void WatchfaceScreen::drawDashboard(M5Canvas& c) {
   c.setTextDatum(middle_center);
   c.setFont(&fonts::Font2);
 
-  icoSteps(c, r1cols[0], icoY1, vcol[0]);
-  icoPin(c,   r1cols[1], icoY1, vcol[1]);
-  icoFlame(c, r1cols[2], icoY1, vcol[2]);
-  icoStopwatch(c, r2cols[0], icoY2, vcol[3]);
-  icoPerson(c,    r2cols[1], icoY2, vcol[4]);
+  icons::steps(c, r1cols[0], icoY1, vcol[0]);
+  icons::pin(c,   r1cols[1], icoY1, vcol[1]);
+  icons::flame(c, r1cols[2], icoY1, vcol[2]);
+  icons::stopwatch(c, r2cols[0], icoY2, vcol[3]);
+  icons::person(c,    r2cols[1], icoY2, vcol[4]);
 
   for (int i = 0; i < 3; i++) { c.setTextColor(vcol[i]); c.drawString(vals[i], r1cols[i], valY1); }
   c.setTextColor(vcol[3]); c.drawString(vals[3], r2cols[0], valY2);
